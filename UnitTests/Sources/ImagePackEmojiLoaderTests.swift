@@ -68,6 +68,19 @@ struct ImagePackEmojiLoaderTests {
         #expect(categories.first?.emojis.count == 1)
     }
     
+    @Test("The shared pack is listed after the user's packs, without the emojis they already have")
+    func loadSharedPack() async throws {
+        let clientProxy = makeClientProxy(accountData: ["im.ponies.user_emotes": #"{ "images": { "parrot": { "url": "mxc://example.com/parrot" } } }"#])
+        let sharedPack = #"{ "pack": { "display_name": "Team" }, "images": { "parrot": { "url": "mxc://example.com/parrot" }, "ship_it": { "url": "mxc://example.com/ship" } } }"#
+        
+        let categories = await ImagePackEmojiLoader(clientProxy: clientProxy, sharedPackSource: SharedEmojiPackSourceStub(content: sharedPack)).load()
+        
+        #expect(categories.map(\.name) == [nil, "Team"])
+        let sharedCategory = try #require(categories.last)
+        #expect(sharedCategory.id == EmojiCategory.customEmojiCategoryIdentifierPrefix + "shared")
+        #expect(sharedCategory.emojis.map(\.label) == ["ship_it"])
+    }
+    
     @Test("No categories are loaded when the user has no image packs")
     func loadWithoutPacks() async {
         let categories = await ImagePackEmojiLoader(clientProxy: makeClientProxy(accountData: [:])).load()
@@ -82,5 +95,13 @@ struct ImagePackEmojiLoaderTests {
             .success(accountData[eventType])
         }
         return clientProxy
+    }
+}
+
+private struct SharedEmojiPackSourceStub: SharedEmojiPackSourceProtocol {
+    let content: String?
+    
+    func fetch() async -> String? {
+        content
     }
 }

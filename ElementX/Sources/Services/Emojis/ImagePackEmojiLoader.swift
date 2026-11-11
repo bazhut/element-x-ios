@@ -7,22 +7,31 @@
 
 import Foundation
 
-/// Loads the custom emojis from the user's MSC2545 image packs in their account data.
+/// Loads the custom emojis from MSC2545 image packs: the user's packs in their account data, then the pack shared with every user.
+///
+/// An emoji found in several packs is only kept in the first one, as its URL is used as the reaction key.
 struct ImagePackEmojiLoader: EmojiLoaderProtocol {
     // Most clients still write the unstable type, so read both.
     private static let eventTypes = ["m.image_pack", "im.ponies.user_emotes"]
+    private static let sharedPackIdentifier = "shared"
     
     let clientProxy: ClientProxyProtocol
+    var sharedPackSource: SharedEmojiPackSourceProtocol?
     
     func load() async -> [EmojiCategory] {
-        var categories = [EmojiCategory]()
-        var loadedKeys = Set<String>()
-        
+        var packs = [(id: String, json: String)]()
         for eventType in Self.eventTypes {
-            guard case let .success(json?) = await clientProxy.accountData(eventType: eventType),
-                  let pack = ImagePackContent(json: json) else {
-                continue
+            if case let .success(json?) = await clientProxy.accountData(eventType: eventType) {
+                packs.append((eventType, json))
             }
+        }
+        if let json = await sharedPackSource?.fetch() {
+            packs.append((Self.sharedPackIdentifier, json))
+        }
+        
+        var loadedKeys = Set<String>()
+        return packs.compactMap { id, json in
+            guard let pack = ImagePackContent(json: json) else { return nil }
             
             let emojis = pack.emoticons
                 .map { emoticon in
@@ -33,14 +42,12 @@ struct ImagePackEmojiLoader: EmojiLoaderProtocol {
                               imageURL: emoticon.url)
                 }
                 .filter { loadedKeys.insert($0.key).inserted }
-            if !emojis.isEmpty {
-                categories.append(EmojiCategory(id: EmojiCategory.customEmojiCategoryIdentifierPrefix + eventType,
-                                                emojis: emojis,
-                                                name: pack.pack?.displayName))
-            }
+            guard !emojis.isEmpty else { return nil }
+            
+            return EmojiCategory(id: EmojiCategory.customEmojiCategoryIdentifierPrefix + id,
+                                 emojis: emojis,
+                                 name: pack.pack?.displayName)
         }
-        
-        return categories
     }
 }
 

@@ -315,6 +315,9 @@ final nonisolated class AppSettings: @unchecked Sendable {
     /// that captions might not be visible to users who are using other Matrix clients.
     let shouldShowMediaCaptionWarning = true
     
+    /// The URL of an MSC2545 image pack whose custom emojis are offered to every user as reactions. `nil` to disable it.
+    let sharedEmojiPackURL: URL? = nil
+    
     // MARK: - Element Call
     
     #if IS_MAIN_APP
