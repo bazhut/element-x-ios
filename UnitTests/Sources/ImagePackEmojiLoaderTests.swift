@@ -29,9 +29,30 @@ struct ImagePackEmojiLoaderTests {
         #expect(categories.count == 1)
         #expect(category.id == EmojiCategory.customEmojiCategoryIdentifierPrefix + "im.ponies.user_emotes")
         #expect(category.name == "Party")
-        #expect(category.emojis.map(\.label) == ["blob", "parrot"])
-        #expect(category.emojis.map(\.key) == ["mxc://example.com/blob", "mxc://example.com/parrot"])
-        #expect(category.emojis.last?.keywords == ["Party parrot"])
+        #expect(category.emojis.map(\.label) == ["parrot", "blob"])
+        #expect(category.emojis.map(\.key) == ["mxc://example.com/parrot", "mxc://example.com/blob"])
+        #expect(category.emojis.first?.keywords == ["Party parrot"])
+    }
+    
+    @Test("The emojis keep the order of the pack, whatever the content of their values")
+    func keepPackOrder() async throws {
+        let clientProxy = makeClientProxy(accountData: ["m.image_pack": #"""
+        {
+            "version": 1,
+            "pack": { "display_name": "Braces { and \"quotes\" }", "usage": ["emoticon"] },
+            "images": {
+                "zebra": { "url": "mxc://example.com/zebra", "body": "Ends with } and ]" },
+                "sm\u0069le": { "url": "mxc://example.com/smile", "info": { "w": 32, "tags": ["{", "["] } },
+                "apple": { "url": "mxc://example.com/apple" }
+            }
+        }
+        """#])
+        
+        let categories = await ImagePackEmojiLoader(clientProxy: clientProxy).load()
+        
+        let category = try #require(categories.first)
+        #expect(category.name == #"Braces { and "quotes" }"#)
+        #expect(category.emojis.map(\.label) == ["zebra", "smile", "apple"])
     }
     
     @Test("Stickers and malformed images are left out of the emojis")

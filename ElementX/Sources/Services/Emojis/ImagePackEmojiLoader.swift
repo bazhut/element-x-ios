@@ -87,15 +87,18 @@ nonisolated struct ImagePackContent: Decodable {
     
     let pack: Pack?
     let images: [String: Image]
+    /// The shortcodes in the order of the JSON, as decoding `images` into a dictionary loses it.
+    private(set) var shortcodeOrder: [String] = []
     
-    /// The images usable as emojis, sorted by shortcode.
+    /// The images usable as emojis, in the order of the pack.
     var emoticons: [Emoticon] {
-        images
+        let positions = Dictionary(shortcodeOrder.enumerated().map { ($1, $0) }) { first, _ in first }
+        return images
             .filter { _, image in
                 // An image without a usage inherits the pack's, and a pack without one allows every usage.
                 (image.usage ?? pack?.usage)?.contains("emoticon") ?? true
             }
-            .sorted { $0.key < $1.key }
+            .sorted { (positions[$0.key] ?? .max, $0.key) < (positions[$1.key] ?? .max, $1.key) }
             .compactMap { shortcode, image in
                 guard image.url.hasPrefix("mxc://"), let url = URL(string: image.url) else { return nil }
                 return Emoticon(shortcode: shortcode, url: url, body: image.body)
@@ -114,11 +117,130 @@ nonisolated struct ImagePackContent: Decodable {
             return nil
         }
         self = content
+        shortcodeOrder = JSONObjectKeyScanner.keys(ofObjectNamed: CodingKeys.images.rawValue, in: data) ?? []
     }
     
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         pack = try container.decodeIfPresent(Pack.self, forKey: .pack)
         images = try (container.decodeIfPresent([String: LossyImage].self, forKey: .images) ?? [:]).compactMapValues(\.image)
+    }
+}
+
+/// Reads the keys of an object nested in a JSON object in the order of the document, which `JSONDecoder` doesn't preserve.
+private nonisolated struct JSONObjectKeyScanner {
+    private let bytes: [UInt8]
+    private var index = 0
+    
+    /// The keys of the object stored under `name` in the root object, or `nil` if there isn't one.
+    static func keys(ofObjectNamed name: String, in data: Data) -> [String]? {
+        var scanner = JSONObjectKeyScanner(bytes: Array(data))
+        return scanner.keysOfMember(named: name)
+    }
+    
+    private init(bytes: [UInt8]) {
+        self.bytes = bytes
+    }
+    
+    private mutating func keysOfMember(named name: String) -> [String]? {
+        guard consume(UInt8(ascii: "{")) else { return nil }
+        while let key = nextKey() {
+            if key == name {
+                return objectKeys()
+            }
+            guard skipValue() else { return nil }
+        }
+        return nil
+    }
+    
+    private mutating func objectKeys() -> [String]? {
+        guard consume(UInt8(ascii: "{")) else { return nil }
+        var keys = [String]()
+        while let key = nextKey() {
+            keys.append(key)
+            guard skipValue() else { return nil }
+        }
+        return keys
+    }
+    
+    /// Reads the key of the next member and its colon, or returns `nil` at the end of the object.
+    private mutating func nextKey() -> String? {
+        _ = consume(UInt8(ascii: ","))
+        skipWhitespace()
+        guard index < bytes.count, bytes[index] == UInt8(ascii: "\""), let key = readString() else { return nil }
+        return consume(UInt8(ascii: ":")) ? key : nil
+    }
+    
+    private mutating func readString() -> String? {
+        let start = index
+        guard skipString() else { return nil }
+        // Decoding the quoted string unescapes it.
+        return try? JSONDecoder().decode(String.self, from: Data(bytes[start..<index]))
+    }
+    
+    /// Skips a string, starting at its opening quote.
+    private mutating func skipString() -> Bool {
+        index += 1
+        while index < bytes.count {
+            switch bytes[index] {
+            case UInt8(ascii: "\\"):
+                index += 2
+            case UInt8(ascii: "\""):
+                index += 1
+                return true
+            default:
+                index += 1
+            }
+        }
+        return false
+    }
+    
+    private mutating func skipValue() -> Bool {
+        skipWhitespace()
+        guard index < bytes.count else { return false }
+        
+        switch bytes[index] {
+        case UInt8(ascii: "\""):
+            return skipString()
+        case UInt8(ascii: "{"), UInt8(ascii: "["):
+            var depth = 0
+            while index < bytes.count {
+                switch bytes[index] {
+                case UInt8(ascii: "\""):
+                    guard skipString() else { return false }
+                    continue
+                case UInt8(ascii: "{"), UInt8(ascii: "["):
+                    depth += 1
+                case UInt8(ascii: "}"), UInt8(ascii: "]"):
+                    depth -= 1
+                default:
+                    break
+                }
+                index += 1
+                if depth == 0 {
+                    return true
+                }
+            }
+            return false
+        default:
+            // A number, a boolean or null, which end at the next separator.
+            while index < bytes.count, ![UInt8(ascii: ","), UInt8(ascii: "}"), UInt8(ascii: "]")].contains(bytes[index]) {
+                index += 1
+            }
+            return true
+        }
+    }
+    
+    private mutating func consume(_ byte: UInt8) -> Bool {
+        skipWhitespace()
+        guard index < bytes.count, bytes[index] == byte else { return false }
+        index += 1
+        return true
+    }
+    
+    private mutating func skipWhitespace() {
+        while index < bytes.count, [UInt8(ascii: " "), UInt8(ascii: "\n"), UInt8(ascii: "\r"), UInt8(ascii: "\t")].contains(bytes[index]) {
+            index += 1
+        }
     }
 }
