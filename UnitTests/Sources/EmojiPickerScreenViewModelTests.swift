@@ -18,7 +18,7 @@ struct EmojiPickerScreenViewModelTests {
         viewModel.context
     }
     
-    @Test
+    @Test("Selecting an emoji yields it and dismisses the picker")
     mutating func selectEmoji() async throws {
         // Given a freshly presented emoji picker.
         setupViewModel()
@@ -35,7 +35,7 @@ struct EmojiPickerScreenViewModelTests {
         #expect(await iterator.next() == nil)
     }
     
-    @Test
+    @Test("Stopping the picker finishes the stream without an emoji")
     mutating func stopFinishesTheStream() async {
         // Given a freshly presented emoji picker.
         setupViewModel()
@@ -48,14 +48,38 @@ struct EmojiPickerScreenViewModelTests {
         #expect(await iterator.next() == nil)
     }
     
+    @Test("Custom emojis are offered for reactions but not for a user status",
+          arguments: [(EmojiPickerScreenMode.reaction, true), (.userStatus, false)])
+    mutating func customEmojis(mode: EmojiPickerScreenMode, isOffered: Bool) async throws {
+        // Given a user with a custom emoji pack.
+        let clientProxy = ClientProxyMock(.init())
+        clientProxy.accountDataClosure = { eventType in
+            eventType == "im.ponies.user_emotes" ? .success(#"{ "images": { "parrot": { "url": "mxc://example.com/parrot" } } }"#) : .success(nil)
+        }
+        let emojiProvider = EmojiProvider(customEmojiLoader: ImagePackEmojiLoader(clientProxy: clientProxy), userSettings: .mock())
+        
+        // When the picker loads its emojis.
+        setupViewModel(mode: mode, emojiProvider: emojiProvider)
+        let deferred = deferFulfillment(context.observe(\.viewState.categories)) { !$0.isEmpty }
+        try await deferred.fulfill()
+        
+        // Then the custom emoji is only offered when it can be used.
+        let customEmoji = context.viewState.categories.flatMap(\.emojis).first { $0.imageURL != nil }
+        #expect((customEmoji?.value == "mxc://example.com/parrot") == isOffered)
+        #expect(customEmoji?.accessibilityName == (isOffered ? "parrot" : nil))
+    }
+    
     // MARK: - Helpers
     
-    private mutating func setupViewModel(selectedEmojis: Set<String> = []) {
+    private mutating func setupViewModel(mode: EmojiPickerScreenMode = .reaction,
+                                         selectedEmojis: Set<String> = [],
+                                         emojiProvider: EmojiProviderProtocol = EmojiProvider(userSettings: .mock())) {
         let (stream, continuation) = AsyncStream<String>.makeStream()
         emojiPickerStream = stream
         
-        viewModel = EmojiPickerScreenViewModel(selectedEmojis: selectedEmojis,
-                                               emojiProvider: EmojiProvider(userSettings: .mock()),
+        viewModel = EmojiPickerScreenViewModel(mode: mode,
+                                               selectedEmojis: selectedEmojis,
+                                               emojiProvider: emojiProvider,
                                                continuation: continuation)
     }
 }

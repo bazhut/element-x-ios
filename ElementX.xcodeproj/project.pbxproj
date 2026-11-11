@@ -588,6 +588,7 @@
 		5877255D6E6ED898D402ED8D /* LocationPickerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 408ACC0D28656F82A5EB6A7E /* LocationPickerSheet.swift */; };
 		588411C8FD72B2A2DFE5F7DE /* XCUIElement.swift in Sources */ = {isa = PBXBuildFile; fileRef = E992D7B8BE54B2AB454613AF /* XCUIElement.swift */; };
 		5897A59DDBD3592282092223 /* MediaSourceProxy.swift in Sources */ = {isa = PBXBuildFile; fileRef = D49B9785E3AD7D1C15A29F2F /* MediaSourceProxy.swift */; };
+		58AE9FCBAA5C2DAB313672BE /* ImagePackEmojiLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = D378A4A617DDC85060447312 /* ImagePackEmojiLoader.swift */; };
 		58F357A9D130A654ABCB1638 /* RageshakeConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FC598338E7CF41107293AB5 /* RageshakeConfiguration.swift */; };
 		592A5B88471676D6F50B9798 /* SearchScreenCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A6B10AEA5983B4A2336387B /* SearchScreenCoordinator.swift */; };
 		5992EF10AA157EBD97D88910 /* AudioRecorderState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6569593FA36B22259E806A67 /* AudioRecorderState.swift */; };
@@ -1241,6 +1242,7 @@
 		BC5F94B10B40ABEC6046B473 /* ChatsTabFlowCoordinatorStateMachine.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2B94F1B0B5D9D42B15AA6E8 /* ChatsTabFlowCoordinatorStateMachine.swift */; };
 		BC7CA1379D7C24F47B1B8B7E /* PaginationIndicatorRoomTimelineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E7F7A975514E850A834B29F /* PaginationIndicatorRoomTimelineView.swift */; };
 		BCA5E2157CE27AB6F1D043D3 /* AsyncAlgorithms in Frameworks */ = {isa = PBXBuildFile; productRef = 5A8EF1A5F9629FCA309D4B2A /* AsyncAlgorithms */; };
+		BCC39BFA575ABF9ADF15D500 /* ImagePackEmojiLoaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B68269D98B32B8865C69CE7 /* ImagePackEmojiLoaderTests.swift */; };
 		BCC864190651B3A3CF51E4DF /* MediaFileHandleProxy.swift in Sources */ = {isa = PBXBuildFile; fileRef = DEC1D382565A4E9CAC2F14EA /* MediaFileHandleProxy.swift */; };
 		BD0BE20DBCE31253AE4490A1 /* RoomListFiltersEmptyStateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC1DDB2293A51EA4C2739351 /* RoomListFiltersEmptyStateView.swift */; };
 		BD6685592716CA957D7BAAC4 /* RoomChangeRolesScreenSelectedItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D9B45D584D232CB9E5C7734 /* RoomChangeRolesScreenSelectedItem.swift */; };
@@ -2405,6 +2407,7 @@
 		5AEA0B743847CFA5B3C38EE4 /* RoomMembersListScreenCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomMembersListScreenCoordinator.swift; sourceTree = "<group>"; };
 		5B2A2B168C8DC14A1A9D1C64 /* NotificationToneManagerProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationToneManagerProtocol.swift; sourceTree = "<group>"; };
 		5B609486E3B9AF012AEE3E78 /* 94 */ = {isa = PBXFileReference; path = 94; sourceTree = "<group>"; };
+		5B68269D98B32B8865C69CE7 /* ImagePackEmojiLoaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImagePackEmojiLoaderTests.swift; sourceTree = "<group>"; };
 		5B8F0ED874DF8C9A51B0AB6F /* SettingsScreenCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsScreenCoordinator.swift; sourceTree = "<group>"; };
 		5C1F000589F2CEE6B03ECFAB /* TimelineMediaPreviewViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimelineMediaPreviewViewModelTests.swift; sourceTree = "<group>"; };
 		5C4E14E3688FF3532456A656 /* TimelineScrollButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimelineScrollButton.swift; sourceTree = "<group>"; };
@@ -3137,6 +3140,7 @@
 		D33116993D54FADC0C721C1F /* Application.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Application.swift; sourceTree = "<group>"; };
 		D33F8BA996B9D8B06D1FB4EC /* ElementCallSystemEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ElementCallSystemEvent.swift; sourceTree = "<group>"; };
 		D35BFDD98AC713A091826ACD /* AuthenticationServiceFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthenticationServiceFactory.swift; sourceTree = "<group>"; };
+		D378A4A617DDC85060447312 /* ImagePackEmojiLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImagePackEmojiLoader.swift; sourceTree = "<group>"; };
 		D38391154120264910D19528 /* PollMock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PollMock.swift; sourceTree = "<group>"; };
 		D39D7F513A36C9C1951DB44C /* AnalyticsSettingsScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalyticsSettingsScreen.swift; sourceTree = "<group>"; };
 		D3F219838588C62198E726E3 /* LABiometryType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LABiometryType.swift; sourceTree = "<group>"; };
@@ -4425,6 +4429,7 @@
 				201305507D7DFD16E544563A /* EmojiLoaderProtocol.swift */,
 				6C113E0CB7E15E9765B1817A /* EmojiProvider.swift */,
 				8BCCE3D12B0A9C6E559B5B5A /* EmojiProviderProtocol.swift */,
+				D378A4A617DDC85060447312 /* ImagePackEmojiLoader.swift */,
 			);
 			path = Emojis;
 			sourceTree = "<group>";
@@ -5417,6 +5422,7 @@
 				505208F28007C0FEC14E1FF0 /* HomeScreenViewModelTests.swift */,
 				DB9292E3516E65DED7130684 /* HomeserverHistoryManagerTests.swift */,
 				ECBBCD7444C2B515D02EC0E8 /* IdentityConfirmationScreenViewModelTests.swift */,
+				5B68269D98B32B8865C69CE7 /* ImagePackEmojiLoaderTests.swift */,
 				845DDBDE5A0887E73D38B826 /* InviteUsersViewModelTests.swift */,
 				38C4E1A4F837E3BB83CBDB99 /* JoinedRoomProxyTests.swift */,
 				DE5127D6EA05B2E45D0A7D59 /* JoinRoomScreenViewModelTests.swift */,
@@ -8617,6 +8623,7 @@
 				F6F49E37272AD7397CD29A01 /* HomeScreenViewModelTests.swift in Sources */,
 				723382158BFD148984201266 /* HomeserverHistoryManagerTests.swift in Sources */,
 				00091F143129B9A4904563C4 /* IdentityConfirmationScreenViewModelTests.swift in Sources */,
+				BCC39BFA575ABF9ADF15D500 /* ImagePackEmojiLoaderTests.swift in Sources */,
 				A23B8B27A1436A1049EEF68E /* InfoPlistReader.swift in Sources */,
 				A216C83ADCF32BA5EF8A6FBC /* InviteUsersViewModelTests.swift in Sources */,
 				7C0E29E0279866C62EC67A28 /* JoinRoomScreenViewModelTests.swift in Sources */,
@@ -9209,6 +9216,7 @@
 				7CD16990BA843BE9ED639129 /* ImageRoomTimelineItem.swift in Sources */,
 				B796A25F282C0A340D1B9C12 /* ImageRoomTimelineItemContent.swift in Sources */,
 				E2D57361B835E4D2230960E6 /* ImageRoomTimelineView.swift in Sources */,
+				58AE9FCBAA5C2DAB313672BE /* ImagePackEmojiLoader.swift in Sources */,
 				B6048166B4AA4CEFEA9B77A6 /* InfoPlistReader.swift in Sources */,
 				BFEB24336DFD5F196E6F3456 /* IntentionalMentions.swift in Sources */,
 				2AAB2A77F1762A2648078A30 /* InteractiveQuickLook.swift in Sources */,

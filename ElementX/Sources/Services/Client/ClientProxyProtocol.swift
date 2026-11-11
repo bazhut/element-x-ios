@@ -267,6 +267,9 @@ protocol ClientProxyProtocol: AnyObject {
     
     func fetchMediaPreviewConfiguration() async -> Result<MediaPreviewConfig?, ClientProxyError>
     
+    /// The content of the global account data event of the given type, as a JSON string.
+    func accountData(eventType: String) async -> Result<String?, ClientProxyError>
+    
     // MARK: - Ignored users
     
     func ignoreUser(_ userID: String) async -> Result<Void, ClientProxyError>

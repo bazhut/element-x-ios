@@ -1146,6 +1146,7 @@ class RoomFlowCoordinator: FlowCoordinatorProtocol {
         let params = EmojiPickerScreenCoordinatorParameters(mode: .reaction,
                                                             selectedEmojis: selectedEmojis,
                                                             emojiProvider: flowParameters.emojiProvider,
+                                                            mediaProvider: userSession.mediaProvider,
                                                             continuation: emojiPickerContinuation)
         let coordinator = EmojiPickerScreenCoordinator(parameters: params)
         

@@ -16,6 +16,7 @@ struct EmojiPickerScreen: View {
     @State private var isSearching = false
     
     @ScaledMetric(relativeTo: .title) var minimumWidth: Double = 64
+    @ScaledMetric(relativeTo: .title) private var customEmojiSize: Double = 34
     
     private let feedbackGenerator = UIImpactFeedbackGenerator(style: .heavy)
     
@@ -30,13 +31,13 @@ struct EmojiPickerScreen: View {
                                     feedbackGenerator.impactOccurred()
                                     context.send(viewAction: .emojiTapped(emoji: emoji))
                                 } label: {
-                                    Text(emoji.value)
+                                    emojiLabel(for: emoji)
                                         .padding(9.0)
                                         .font(.compound.headingXL)
                                         .background(Circle()
                                             .foregroundColor(emojiBackgroundColor(for: emoji.value)))
                                 }
-                                .accessibilityLabel(accessibilityLabel(for: emoji.value))
+                                .accessibilityLabel(accessibilityLabel(for: emoji))
                             }
                         } header: {
                             EmojiPickerScreenHeaderView(title: category.name)
@@ -63,11 +64,26 @@ struct EmojiPickerScreen: View {
         }
     }
     
-    private func accessibilityLabel(for emoji: String) -> String {
-        if context.viewState.selectedEmojis.contains(emoji) {
-            return L10n.a11yRemoveReaction(emoji)
+    @ViewBuilder
+    private func emojiLabel(for emoji: EmojiPickerEmojiViewData) -> some View {
+        // Hint `image/gif` like `ReactionKeyView` so animated emojis play. Kingfisher sniffs the real format.
+        if let imageURL = emoji.imageURL, let mediaSource = try? MediaSourceProxy(url: imageURL, mimeType: "image/gif") {
+            LoadableImage(mediaSource: mediaSource,
+                          size: CGSize(width: customEmojiSize, height: customEmojiSize),
+                          mediaProvider: context.mediaProvider,
+                          transformer: { $0.scaledToFit() },
+                          placeholder: { Color.clear })
+                .frame(width: customEmojiSize, height: customEmojiSize)
         } else {
-            return L10n.a11yAddReaction(emoji)
+            Text(emoji.value)
+        }
+    }
+    
+    private func accessibilityLabel(for emoji: EmojiPickerEmojiViewData) -> String {
+        if context.viewState.selectedEmojis.contains(emoji.value) {
+            return L10n.a11yRemoveReaction(emoji.accessibilityName)
+        } else {
+            return L10n.a11yAddReaction(emoji.accessibilityName)
         }
     }
     

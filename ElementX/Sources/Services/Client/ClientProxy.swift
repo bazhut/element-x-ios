@@ -829,6 +829,15 @@ class ClientProxy: ClientProxyProtocol {
         }
     }
     
+    func accountData(eventType: String) async -> Result<String?, ClientProxyError> {
+        do {
+            return try await .success(client.accountData(eventType: eventType))
+        } catch {
+            MXLog.error("Failed reading \(eventType) account data with error: \(error)")
+            return .failure(.sdkError(error))
+        }
+    }
+    
     // MARK: Ignored users
     
     func ignoreUser(_ userID: String) async -> Result<Void, ClientProxyError> {
