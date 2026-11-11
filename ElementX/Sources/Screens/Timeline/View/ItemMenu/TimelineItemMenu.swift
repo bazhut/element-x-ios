@@ -15,6 +15,7 @@ struct TimelineItemMenu: View {
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     
     @State private var reactionsFrame = CGRect.zero
+    @ScaledMetric(relativeTo: .title) private var customEmojiSize = 28
     
     let item: EventBasedTimelineItemProtocol
     let actions: TimelineItemMenuActions
@@ -115,7 +116,7 @@ struct TimelineItemMenu: View {
             ScrollView(.horizontal) {
                 HStack(alignment: .center, spacing: 8) {
                     ForEach(actions.reactions, id: \.key) {
-                        reactionButton(for: $0.key)
+                        reactionButton(for: $0)
                     }
                 }
                 .padding(.horizontal)
@@ -150,20 +151,32 @@ struct TimelineItemMenu: View {
         }
     }
     
-    private func reactionButton(for emoji: String) -> some View {
-        Button {
+    private func reactionButton(for reaction: TimelineItemMenuReaction) -> some View {
+        // The key of a custom emoji is a URI, so it is announced generically like in the timeline.
+        let accessibilityName = reaction.imageURL == nil ? reaction.key : L10n.commonReaction
+        
+        return Button {
             feedbackGenerator.impactOccurred()
             dismiss()
-            context.send(viewAction: .toggleReaction(key: emoji, itemID: item.id))
+            context.send(viewAction: .toggleReaction(key: reaction.key, itemID: item.id))
         } label: {
-            Text(emoji)
+            reactionLabel(for: reaction)
                 .font(.compound.headingLG)
                 .padding(8)
                 .background(Circle()
-                    .foregroundColor(reactionBackgroundColor(for: emoji)))
+                    .foregroundColor(reactionBackgroundColor(for: reaction.key)))
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .accessibilityLabel(hasReacted(to: emoji) ? L10n.a11yRemoveReaction(emoji) : L10n.a11yAddReaction(emoji))
+        .accessibilityLabel(hasReacted(to: reaction.key) ? L10n.a11yRemoveReaction(accessibilityName) : L10n.a11yAddReaction(accessibilityName))
+    }
+    
+    @ViewBuilder
+    private func reactionLabel(for reaction: TimelineItemMenuReaction) -> some View {
+        if let imageURL = reaction.imageURL {
+            CustomEmojiImage(url: imageURL, size: customEmojiSize, mediaProvider: context.mediaProvider)
+        } else {
+            Text(reaction.key)
+        }
     }
     
     private func hasReacted(to emoji: String) -> Bool {

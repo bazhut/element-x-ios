@@ -66,14 +66,8 @@ struct EmojiPickerScreen: View {
     
     @ViewBuilder
     private func emojiLabel(for emoji: EmojiPickerEmojiViewData) -> some View {
-        // Hint `image/gif` like `ReactionKeyView` so animated emojis play. Kingfisher sniffs the real format.
-        if let imageURL = emoji.imageURL, let mediaSource = try? MediaSourceProxy(url: imageURL, mimeType: "image/gif") {
-            LoadableImage(mediaSource: mediaSource,
-                          size: CGSize(width: customEmojiSize, height: customEmojiSize),
-                          mediaProvider: context.mediaProvider,
-                          transformer: { $0.scaledToFit() },
-                          placeholder: { Color.clear })
-                .frame(width: customEmojiSize, height: customEmojiSize)
+        if let imageURL = emoji.imageURL {
+            CustomEmojiImage(url: imageURL, size: customEmojiSize, mediaProvider: context.mediaProvider)
         } else {
             Text(emoji.value)
         }

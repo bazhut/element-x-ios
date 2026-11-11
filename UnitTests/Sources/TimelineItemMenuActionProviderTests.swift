@@ -6,10 +6,11 @@
 //
 
 @testable import ElementX
+import Foundation
 import Testing
 
 struct TimelineItemMenuActionProviderTests {
-    @Test
+    @Test("A live location share can't be forwarded")
     func liveLocationShareIsNotForwardable() throws {
         let item = makeLiveLocationItem(isLive: true)
         let actions = try #require(makeActions(for: item))
@@ -18,7 +19,7 @@ struct TimelineItemMenuActionProviderTests {
         #expect(!hasForward)
     }
     
-    @Test
+    @Test("An ended live location share can't be forwarded")
     func endedLiveLocationShareIsNotForwardable() throws {
         let item = makeLiveLocationItem(isLive: false)
         let actions = try #require(makeActions(for: item))
@@ -27,7 +28,7 @@ struct TimelineItemMenuActionProviderTests {
         #expect(!hasForward)
     }
     
-    @Test
+    @Test("A poll can't be forwarded")
     func pollIsNotForwardable() throws {
         let item = PollRoomTimelineItem.mock(poll: .emptyDisclosed)
         let actions = try #require(makeActions(for: item))
@@ -36,7 +37,7 @@ struct TimelineItemMenuActionProviderTests {
         #expect(!hasForward)
     }
     
-    @Test
+    @Test("A text message can be forwarded")
     func textMessageIsForwardable() throws {
         let item = TextRoomTimelineItem(id: .randomEvent,
                                         timestamp: .mock,
@@ -51,7 +52,7 @@ struct TimelineItemMenuActionProviderTests {
         #expect(hasForward)
     }
     
-    @Test
+    @Test("A redacted message can't be forwarded")
     func redactedMessageIsNotForwardable() throws {
         let item = RedactedRoomTimelineItem(id: .randomEvent,
                                             body: "Message removed",
@@ -66,7 +67,7 @@ struct TimelineItemMenuActionProviderTests {
         #expect(!hasForward)
     }
     
-    @Test
+    @Test("A message that can't be decrypted can't be forwarded")
     func encryptedMessageIsNotForwardable() throws {
         let item = EncryptedRoomTimelineItem(id: .randomEvent,
                                              body: "",
@@ -82,13 +83,26 @@ struct TimelineItemMenuActionProviderTests {
         #expect(!hasForward)
     }
     
-    @Test
+    @Test("A message that hasn't been sent yet can't be forwarded")
     func localEchoIsNotForwardable() throws {
         let item = makeTextItem(id: .event(uniqueID: .init("local"), eventOrTransactionID: .transactionID("txn")))
         let actions = try #require(makeActions(for: item))
         
         let hasForward = actions.actions.contains(where: \.isForward)
         #expect(!hasForward)
+    }
+    
+    @Test("A frequently used custom emoji is offered as a quick reaction after the default ones")
+    func customEmojiQuickReaction() throws {
+        let emojiProvider = EmojiProvider(userSettings: .mock())
+        emojiProvider.markEmojiAsFrequentlyUsed("mxc://example.com/parrot")
+        
+        let actions = try #require(makeActions(for: makeTextItem(), emojiProvider: emojiProvider))
+        
+        let customReaction = try #require(actions.reactions.last)
+        #expect(customReaction.key == "mxc://example.com/parrot")
+        #expect(customReaction.imageURL == URL(string: "mxc://example.com/parrot"))
+        #expect(actions.reactions.dropLast().allSatisfy { $0.imageURL == nil })
     }
     
     // MARK: - Helpers
@@ -113,7 +127,9 @@ struct TimelineItemMenuActionProviderTests {
               content: .init(isLive: isLive, timeoutDate: .mock, lastGeoURI: nil))
     }
     
-    private func makeActions(for item: RoomTimelineItemProtocol, timelineKind: TimelineKind = .live) -> TimelineItemMenuActions? {
+    private func makeActions(for item: RoomTimelineItemProtocol,
+                             timelineKind: TimelineKind = .live,
+                             emojiProvider: EmojiProviderProtocol = EmojiProvider(userSettings: .mock())) -> TimelineItemMenuActions? {
         TimelineItemMenuActionProvider(timelineItem: item,
                                        canCurrentUserSendMessage: true,
                                        canCurrentUserRedactSelf: true,
@@ -123,7 +139,7 @@ struct TimelineItemMenuActionProviderTests {
                                        isViewSourceEnabled: true,
                                        areThreadsEnabled: true,
                                        timelineKind: timelineKind,
-                                       emojiProvider: EmojiProvider(userSettings: .mock()))
+                                       emojiProvider: emojiProvider)
             .makeActions()
     }
 }

@@ -451,6 +451,7 @@
 		452507BCE97B3EA0F24E206E /* UserSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100DA305FE28BB3B6AEDE1FD /* UserSettings.swift */; };
 		454311EAC17D778E19F46592 /* NotificationPermissionsScreenCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91868EB98818044E6FEBE532 /* NotificationPermissionsScreenCoordinator.swift */; };
 		454F8DDC4442C0DE54094902 /* LABiometryType.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3F219838588C62198E726E3 /* LABiometryType.swift */; };
+		45D257C2F09DE96A8EB2B5C5 /* CustomEmojiImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7415202F0FF9FB3CF89E6DC5 /* CustomEmojiImage.swift */; };
 		45D6DC594816288983627484 /* UITestsScreenIdentifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CEBE5EA91E8691EDF364EC2 /* UITestsScreenIdentifier.swift */; };
 		4610C57A4785FFF5E67F0C6D /* SwiftOGG in Frameworks */ = {isa = PBXBuildFile; productRef = 391D11F92DFC91666AA1503F /* SwiftOGG */; };
 		46562110EE202E580A5FFD9C /* RoomScreenViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93CF7B19FFCF8EFBE0A8696A /* RoomScreenViewModelTests.swift */; };
@@ -2545,6 +2546,7 @@
 		73A5C3F7C9C1DA10CAEC6A98 /* VoiceMessageRecordingComposer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceMessageRecordingComposer.swift; sourceTree = "<group>"; };
 		73F3153AB9D628110878E24F /* libMatrixRustSDKMocks.a */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = archive.ar; path = libMatrixRustSDKMocks.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		73FEE625AB52042049DB9268 /* ThreadTimelineScreenCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThreadTimelineScreenCoordinator.swift; sourceTree = "<group>"; };
+		7415202F0FF9FB3CF89E6DC5 /* CustomEmojiImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomEmojiImage.swift; sourceTree = "<group>"; };
 		74240BE69DACAD01AA670730 /* ClassicAppMXAccount.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClassicAppMXAccount.swift; sourceTree = "<group>"; };
 		7447C0AD7EF302CD027D6230 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/SAS.strings; sourceTree = "<group>"; };
 		7463464054DDF194C54F0B04 /* LogViewerScreenViewModelProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogViewerScreenViewModelProtocol.swift; sourceTree = "<group>"; };
@@ -4272,6 +4274,7 @@
 				FEC4B431B0117BDEE697DB4A /* ComposerDisabledView.swift */,
 				C8794B3D86D7D444B9B6FF7B /* ContentScanningView.swift */,
 				B682FE2C44C5E163E7023B05 /* CopyTextButton.swift */,
+				7415202F0FF9FB3CF89E6DC5 /* CustomEmojiImage.swift */,
 				89D7846847BA9D2C5346ED9C /* EditAvatarButtonStyle.swift */,
 				E2776E63E02719B20758EB78 /* EditRoomAddressListRow.swift */,
 				8F4F0AB250EFA7B71FB2BDB2 /* HorizontalHighlightGradient.swift */,
@@ -9301,6 +9304,7 @@
 				EB5B79DD2BCAF8F3B8B01F2F /* LiveLocationSheet.swift in Sources */,
 				6E47D126DD7585E8F8237CE7 /* LoadableAvatarImage.swift in Sources */,
 				D9F80CE61BF8FF627FDB0543 /* LoadableImage.swift in Sources */,
+				45D257C2F09DE96A8EB2B5C5 /* CustomEmojiImage.swift in Sources */,
 				256D76972BA3254F7CB7F88B /* LocationAnnotation.swift in Sources */,
 				B5479997ECC516C121E6625E /* LocationMarkerView.swift in Sources */,
 				5877255D6E6ED898D402ED8D /* LocationPickerSheet.swift in Sources */,

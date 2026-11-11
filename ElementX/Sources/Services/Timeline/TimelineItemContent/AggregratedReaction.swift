@@ -53,6 +53,6 @@ nonisolated extension AggregatedReaction {
     
     /// The custom image to display instead of the key, when the key is an `mxc://` URI (MSC4027).
     var imageURL: URL? {
-        key.hasPrefix("mxc://") ? URL(string: key) : nil
+        key.customEmojiURL
     }
 }

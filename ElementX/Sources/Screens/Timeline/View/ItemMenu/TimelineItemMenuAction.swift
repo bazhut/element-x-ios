@@ -33,10 +33,7 @@ struct TimelineItemMenuActions {
             .init(key: "❤️", symbol: .heart)
         ]
         
-        // Quick reactions are drawn as text, so custom emojis (`mxc://` keys) are only offered by the picker.
-        frequentlyUsed.append(contentsOf: emojiProvider.frequentlyUsedSystemEmojis()
-            .filter { !$0.hasPrefix("mxc://") }
-            .map { TimelineItemMenuReaction(key: $0, symbol: .heart) })
+        frequentlyUsed.append(contentsOf: emojiProvider.frequentlyUsedSystemEmojis().map { TimelineItemMenuReaction(key: $0, symbol: .heart) })
         
         reactions = if isReactable {
             Array(frequentlyUsed.elements.prefix(10))
@@ -49,6 +46,11 @@ struct TimelineItemMenuActions {
 struct TimelineItemMenuReaction: Hashable {
     let key: String
     let symbol: SFSymbol
+    
+    /// The custom emoji's image when the key is an `mxc://` URI.
+    var imageURL: URL? {
+        key.customEmojiURL
+    }
     
     /// Frequently used emojis on the all use the same .heart SFSymbol.
     /// Override equatable so we can remove duplicates.
