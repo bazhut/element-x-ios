@@ -316,7 +316,8 @@ final nonisolated class AppSettings: @unchecked Sendable {
     let shouldShowMediaCaptionWarning = true
     
     /// The URL of an MSC2545 image pack whose custom emojis are offered to every user as reactions. `nil` to disable it.
-    let sharedEmojiPackURL: URL? = nil
+    /// Set through the `SHARED_EMOJI_PACK_URL` environment variable when generating `Secrets.swift`, to keep it out of the repository.
+    let sharedEmojiPackURL: URL? = Secrets.sharedEmojiPackURL.flatMap { URL(string: $0) }
     
     // MARK: - Element Call
     
