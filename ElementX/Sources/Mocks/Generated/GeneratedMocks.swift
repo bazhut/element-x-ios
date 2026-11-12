@@ -4147,44 +4147,44 @@ nonisolated class ClientProxyMock: ClientProxyProtocol, @unchecked Sendable {
     }
     //MARK: - accountData
 
-    private let accountDataCallsCountLock = NSLock()
-    private nonisolated(unsafe) var accountDataUnderlyingCallsCount = 0
-    var accountDataCallsCount: Int {
-        get { accountDataCallsCountLock.withLock { accountDataUnderlyingCallsCount } }
-        set { accountDataCallsCountLock.withLock { accountDataUnderlyingCallsCount = newValue } }
+    private let accountDataEventTypeCallsCountLock = NSLock()
+    private nonisolated(unsafe) var accountDataEventTypeUnderlyingCallsCount = 0
+    var accountDataEventTypeCallsCount: Int {
+        get { accountDataEventTypeCallsCountLock.withLock { accountDataEventTypeUnderlyingCallsCount } }
+        set { accountDataEventTypeCallsCountLock.withLock { accountDataEventTypeUnderlyingCallsCount = newValue } }
     }
-    var accountDataCalled: Bool {
-        return accountDataCallsCount > 0
+    var accountDataEventTypeCalled: Bool {
+        return accountDataEventTypeCallsCount > 0
     }
-    private let accountDataReceivedEventTypeLock = NSLock()
-    private nonisolated(unsafe) var accountDataUnderlyingReceivedEventType: String?
-    var accountDataReceivedEventType: String? {
-        get { accountDataReceivedEventTypeLock.withLock { accountDataUnderlyingReceivedEventType } }
-        set { accountDataReceivedEventTypeLock.withLock { accountDataUnderlyingReceivedEventType = newValue } }
+    private let accountDataEventTypeReceivedEventTypeLock = NSLock()
+    private nonisolated(unsafe) var accountDataEventTypeUnderlyingReceivedEventType: String?
+    var accountDataEventTypeReceivedEventType: String? {
+        get { accountDataEventTypeReceivedEventTypeLock.withLock { accountDataEventTypeUnderlyingReceivedEventType } }
+        set { accountDataEventTypeReceivedEventTypeLock.withLock { accountDataEventTypeUnderlyingReceivedEventType = newValue } }
     }
-    private let accountDataReceivedInvocationsLock = NSLock()
-    private nonisolated(unsafe) var accountDataUnderlyingReceivedInvocations: [String] = []
-    var accountDataReceivedInvocations: [String] {
-        get { accountDataReceivedInvocationsLock.withLock { accountDataUnderlyingReceivedInvocations } }
-        set { accountDataReceivedInvocationsLock.withLock { accountDataUnderlyingReceivedInvocations = newValue } }
+    private let accountDataEventTypeReceivedInvocationsLock = NSLock()
+    private nonisolated(unsafe) var accountDataEventTypeUnderlyingReceivedInvocations: [String] = []
+    var accountDataEventTypeReceivedInvocations: [String] {
+        get { accountDataEventTypeReceivedInvocationsLock.withLock { accountDataEventTypeUnderlyingReceivedInvocations } }
+        set { accountDataEventTypeReceivedInvocationsLock.withLock { accountDataEventTypeUnderlyingReceivedInvocations = newValue } }
     }
 
-    private let accountDataReturnValueLock = NSLock()
-    private nonisolated(unsafe) var accountDataUnderlyingReturnValue: Result<String?, ClientProxyError>!
-    var accountDataReturnValue: Result<String?, ClientProxyError>! {
-        get { accountDataReturnValueLock.withLock { accountDataUnderlyingReturnValue } }
-        set { accountDataReturnValueLock.withLock { accountDataUnderlyingReturnValue = newValue } }
+    private let accountDataEventTypeReturnValueLock = NSLock()
+    private nonisolated(unsafe) var accountDataEventTypeUnderlyingReturnValue: Result<String?, ClientProxyError>!
+    var accountDataEventTypeReturnValue: Result<String?, ClientProxyError>! {
+        get { accountDataEventTypeReturnValueLock.withLock { accountDataEventTypeUnderlyingReturnValue } }
+        set { accountDataEventTypeReturnValueLock.withLock { accountDataEventTypeUnderlyingReturnValue = newValue } }
     }
-    nonisolated(unsafe) var accountDataClosure: ((String) async -> Result<String?, ClientProxyError>)?
+    nonisolated(unsafe) var accountDataEventTypeClosure: ((String) async -> Result<String?, ClientProxyError>)?
 
     @concurrent func accountData(eventType: String) async -> Result<String?, ClientProxyError> {
-        accountDataCallsCountLock.withLock { accountDataUnderlyingCallsCount += 1 }
-        accountDataReceivedEventType = eventType
-        accountDataReceivedInvocationsLock.withLock { accountDataUnderlyingReceivedInvocations.append(eventType) }
-        if let accountDataClosure = accountDataClosure {
-            return await accountDataClosure(eventType)
+        accountDataEventTypeCallsCountLock.withLock { accountDataEventTypeUnderlyingCallsCount += 1 }
+        accountDataEventTypeReceivedEventType = eventType
+        accountDataEventTypeReceivedInvocationsLock.withLock { accountDataEventTypeUnderlyingReceivedInvocations.append(eventType) }
+        if let accountDataEventTypeClosure = accountDataEventTypeClosure {
+            return await accountDataEventTypeClosure(eventType)
         } else {
-            return accountDataReturnValue
+            return accountDataEventTypeReturnValue
         }
     }
     //MARK: - ignoreUser
