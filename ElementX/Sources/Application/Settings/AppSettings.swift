@@ -232,7 +232,9 @@ final nonisolated class AppSettings: @unchecked Sendable {
         #endif
     }
     
-    private(set) var pushGatewayBaseURL: URL = "https://matrix.org"
+    /// The push gateway the homeserver sends notifications to. Set through the `PUSH_GATEWAY_BASE_URL` environment variable
+    /// when generating `Secrets.swift`, matrix.org's otherwise.
+    private(set) var pushGatewayBaseURL: URL = Secrets.pushGatewayBaseURL.flatMap { URL(string: $0) } ?? "https://matrix.org"
     var pushGatewayNotifyEndpoint: URL {
         pushGatewayBaseURL.appending(path: "_matrix/push/v1/notify")
     }
