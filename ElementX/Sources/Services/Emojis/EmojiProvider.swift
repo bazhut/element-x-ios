@@ -12,12 +12,16 @@ import Foundation
 class EmojiProvider: EmojiProviderProtocol {
     private let maxFrequentEmojis = 20
     private let loader: EmojiLoaderProtocol
+    private let customEmojiLoader: EmojiLoaderProtocol?
     private let userSettings: UserSettings
     
     private(set) var state: EmojiProviderState = .notLoaded
     
-    init(loader: EmojiLoaderProtocol = EmojibaseDatasource(), userSettings: UserSettings) {
+    init(loader: EmojiLoaderProtocol = EmojibaseDatasource(),
+         customEmojiLoader: EmojiLoaderProtocol? = nil,
+         userSettings: UserSettings) {
         self.loader = loader
+        self.customEmojiLoader = customEmojiLoader
         self.userSettings = userSettings
         
         Task {
@@ -28,17 +32,22 @@ class EmojiProvider: EmojiProviderProtocol {
     func categories(searchString: String? = nil) async -> [EmojiCategory] {
         var emojiCategories = await loadIfNeeded()
         
+        // Custom emojis aren't cached as the user's packs can change at any time.
+        if let customEmojiLoader {
+            await emojiCategories.insert(contentsOf: customEmojiLoader.load(), at: 0)
+        }
+        
         let allEmojis = emojiCategories.reduce([]) { partialResult, category in
             partialResult + category.emojis
         }
         
-        // Map frequently used system unicode emojis to our emoji provider ones and preserve the order
+        // Map frequently used reaction keys to our emoji provider ones and preserve the order
         let frequentlyUsedEmojis = frequentlyUsedSystemEmojis().prefix(maxFrequentEmojis)
         let emojis = allEmojis
-            .filter { frequentlyUsedEmojis.contains($0.unicode) }
+            .filter { frequentlyUsedEmojis.contains($0.key) }
             .sorted { first, second in
-                guard let firstIndex = frequentlyUsedEmojis.firstIndex(of: first.unicode),
-                      let secondIndex = frequentlyUsedEmojis.firstIndex(of: second.unicode) else {
+                guard let firstIndex = frequentlyUsedEmojis.firstIndex(of: first.key),
+                      let secondIndex = frequentlyUsedEmojis.firstIndex(of: second.key) else {
                     return false
                 }
                 
@@ -92,7 +101,7 @@ class EmojiProvider: EmojiProviderProtocol {
                 let searchArray = [emoji.label + emoji.unicode] + emoji.shortcodes + emoji.keywords
                 return searchArray.description.range(of: searchString, options: .caseInsensitive) != nil
             }
-            return emojis.isEmpty ? nil : EmojiCategory(id: category.id, emojis: emojis)
+            return emojis.isEmpty ? nil : EmojiCategory(id: category.id, emojis: emojis, name: category.name)
         }
     }
     

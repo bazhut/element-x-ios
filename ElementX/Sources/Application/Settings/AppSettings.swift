@@ -232,7 +232,9 @@ final nonisolated class AppSettings: @unchecked Sendable {
         #endif
     }
     
-    private(set) var pushGatewayBaseURL: URL = "https://matrix.org"
+    /// The push gateway the homeserver sends notifications to. Set through the `PUSH_GATEWAY_BASE_URL` environment variable
+    /// when generating `Secrets.swift`, matrix.org's otherwise.
+    private(set) var pushGatewayBaseURL: URL = Secrets.pushGatewayBaseURL.flatMap { URL(string: $0) } ?? "https://matrix.org"
     var pushGatewayNotifyEndpoint: URL {
         pushGatewayBaseURL.appending(path: "_matrix/push/v1/notify")
     }
@@ -314,6 +316,10 @@ final nonisolated class AppSettings: @unchecked Sendable {
     /// Whether or not to show a warning on the media caption composer so the user knows
     /// that captions might not be visible to users who are using other Matrix clients.
     let shouldShowMediaCaptionWarning = true
+    
+    /// The URL of an MSC2545 image pack whose custom emojis are offered to every user as reactions. `nil` to disable it.
+    /// Set through the `SHARED_EMOJI_PACK_URL` environment variable when generating `Secrets.swift`, to keep it out of the repository.
+    let sharedEmojiPackURL: URL? = Secrets.sharedEmojiPackURL.flatMap { URL(string: $0) }
     
     // MARK: - Element Call
     

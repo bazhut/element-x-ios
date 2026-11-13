@@ -4173,6 +4173,48 @@ nonisolated class ClientProxyMock: ClientProxyProtocol, @unchecked Sendable {
             return fetchMediaPreviewConfigurationReturnValue
         }
     }
+    //MARK: - accountData
+
+    private let accountDataEventTypeCallsCountLock = NSLock()
+    private nonisolated(unsafe) var accountDataEventTypeUnderlyingCallsCount = 0
+    var accountDataEventTypeCallsCount: Int {
+        get { accountDataEventTypeCallsCountLock.withLock { accountDataEventTypeUnderlyingCallsCount } }
+        set { accountDataEventTypeCallsCountLock.withLock { accountDataEventTypeUnderlyingCallsCount = newValue } }
+    }
+    var accountDataEventTypeCalled: Bool {
+        return accountDataEventTypeCallsCount > 0
+    }
+    private let accountDataEventTypeReceivedEventTypeLock = NSLock()
+    private nonisolated(unsafe) var accountDataEventTypeUnderlyingReceivedEventType: String?
+    var accountDataEventTypeReceivedEventType: String? {
+        get { accountDataEventTypeReceivedEventTypeLock.withLock { accountDataEventTypeUnderlyingReceivedEventType } }
+        set { accountDataEventTypeReceivedEventTypeLock.withLock { accountDataEventTypeUnderlyingReceivedEventType = newValue } }
+    }
+    private let accountDataEventTypeReceivedInvocationsLock = NSLock()
+    private nonisolated(unsafe) var accountDataEventTypeUnderlyingReceivedInvocations: [String] = []
+    var accountDataEventTypeReceivedInvocations: [String] {
+        get { accountDataEventTypeReceivedInvocationsLock.withLock { accountDataEventTypeUnderlyingReceivedInvocations } }
+        set { accountDataEventTypeReceivedInvocationsLock.withLock { accountDataEventTypeUnderlyingReceivedInvocations = newValue } }
+    }
+
+    private let accountDataEventTypeReturnValueLock = NSLock()
+    private nonisolated(unsafe) var accountDataEventTypeUnderlyingReturnValue: Result<String?, ClientProxyError>!
+    var accountDataEventTypeReturnValue: Result<String?, ClientProxyError>! {
+        get { accountDataEventTypeReturnValueLock.withLock { accountDataEventTypeUnderlyingReturnValue } }
+        set { accountDataEventTypeReturnValueLock.withLock { accountDataEventTypeUnderlyingReturnValue = newValue } }
+    }
+    nonisolated(unsafe) var accountDataEventTypeClosure: ((String) async -> Result<String?, ClientProxyError>)?
+
+    @concurrent func accountData(eventType: String) async -> Result<String?, ClientProxyError> {
+        accountDataEventTypeCallsCountLock.withLock { accountDataEventTypeUnderlyingCallsCount += 1 }
+        accountDataEventTypeReceivedEventType = eventType
+        accountDataEventTypeReceivedInvocationsLock.withLock { accountDataEventTypeUnderlyingReceivedInvocations.append(eventType) }
+        if let accountDataEventTypeClosure = accountDataEventTypeClosure {
+            return await accountDataEventTypeClosure(eventType)
+        } else {
+            return accountDataEventTypeReturnValue
+        }
+    }
     //MARK: - ignoreUser
 
     private let ignoreUserCallsCountLock = NSLock()

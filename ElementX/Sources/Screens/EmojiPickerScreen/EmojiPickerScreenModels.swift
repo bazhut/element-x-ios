@@ -37,8 +37,14 @@ enum EmojiPickerScreenViewAction {
 struct EmojiPickerEmojiCategoryViewData: Identifiable {
     let id: String
     let emojis: [EmojiPickerEmojiViewData]
+    /// The display name of a custom emoji pack.
+    var packName: String?
     
     var name: String {
+        if let packName {
+            return packName
+        }
+        
         switch id {
         case "people":
             return L10n.emojiPickerCategoryPeople
@@ -58,6 +64,8 @@ struct EmojiPickerEmojiCategoryViewData: Identifiable {
             return L10n.emojiPickerCategoryFlags
         case EmojiCategory.frequentlyUsedCategoryIdentifier:
             return L10n.commonFrequentlyUsed
+        case _ where id.hasPrefix(EmojiCategory.customEmojiCategoryIdentifierPrefix):
+            return L10n.a11yCustomEmoji
         default:
             MXLog.failure("Missing translation for emoji category with id \(id)")
             return ""
@@ -67,5 +75,14 @@ struct EmojiPickerEmojiCategoryViewData: Identifiable {
 
 struct EmojiPickerEmojiViewData: Identifiable {
     var id: String
+    /// The reaction key: the emoji itself or a custom emoji's `mxc://` URI.
     let value: String
+    /// The custom emoji's image, shown instead of `value`.
+    var imageURL: URL?
+    /// The name read out by VoiceOver for a custom emoji.
+    var label: String?
+    
+    var accessibilityName: String {
+        label ?? value
+    }
 }

@@ -5,5 +5,7 @@ nonisolated enum Secrets {
     static let postHogAPIKey: String? = "your_key"
     static let rageshakeURL: String? = "https://rageshake.localhost/submit"
     static let mapLibreAPIKey: String? = "your_key"
+    static let sharedEmojiPackURL: String? = nil
+    static let pushGatewayBaseURL: String? = nil
 
 }

@@ -232,14 +232,8 @@ struct ReactionKeyView: View {
     let size: CGFloat
     
     var body: some View {
-        // Reaction keys carry no mimetype, so always hint `image/gif` to take LoadableImage's animated path. Kingfisher sniffs the actual format, so static images still render (full size, no thumbnail).
-        if let imageURL = reaction.imageURL, let mediaSource = try? MediaSourceProxy(url: imageURL, mimeType: "image/gif") {
-            LoadableImage(mediaSource: mediaSource,
-                          size: CGSize(width: size, height: size),
-                          mediaProvider: mediaProvider,
-                          transformer: { $0.scaledToFit() },
-                          placeholder: { Color.clear })
-                .frame(width: size, height: size)
+        if let imageURL = reaction.imageURL {
+            CustomEmojiImage(url: imageURL, size: size, mediaProvider: mediaProvider)
         } else {
             Text(reaction.displayKey)
         }

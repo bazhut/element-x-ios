@@ -47,6 +47,11 @@ struct TimelineItemMenuReaction: Hashable {
     let key: String
     let symbol: SFSymbol
     
+    /// The custom emoji's image when the key is an `mxc://` URI.
+    var imageURL: URL? {
+        key.customEmojiURL
+    }
+    
     /// Frequently used emojis on the all use the same .heart SFSymbol.
     /// Override equatable so we can remove duplicates.
     static func == (lhs: TimelineItemMenuReaction, rhs: TimelineItemMenuReaction) -> Bool {
