@@ -79,7 +79,7 @@ class MediaEventsTimelineScreenViewModel: MediaEventsTimelineScreenViewModelType
             case .displayEmojiPicker, .displayReportContent, .displayCameraPicker, .displayMediaPicker,
                  .displayDocumentPicker, .displayLocationPicker, .displayLiveLocation, .displayNewPollForm, .displayEditPollForm, .displayMediaUploadPreviewScreen,
                  .displaySenderDetails, .displayMessageForwarding, .displayLocation, .displayResolveSendFailure,
-                 .displayThread, .composer, .hasScrolled, .viewInRoomTimeline, .displayRoom, .presentCallScreen:
+                 .displayThread, .composer, .hasScrolled, .viewInRoomTimeline, .displayRoom:
                 break
             }
         }
@@ -104,7 +104,7 @@ class MediaEventsTimelineScreenViewModel: MediaEventsTimelineScreenViewModelType
             case .displayEmojiPicker, .displayReportContent, .displayCameraPicker, .displayMediaPicker,
                  .displayDocumentPicker, .displayLocationPicker, .displayLiveLocation, .displayNewPollForm, .displayEditPollForm, .displayMediaUploadPreviewScreen,
                  .displaySenderDetails, .displayMessageForwarding, .displayLocation, .displayResolveSendFailure,
-                 .displayThread, .composer, .hasScrolled, .viewInRoomTimeline, .displayRoom, .presentCallScreen:
+                 .displayThread, .composer, .hasScrolled, .viewInRoomTimeline, .displayRoom:
                 break
             }
         }
@@ -231,7 +231,7 @@ class MediaEventsTimelineScreenViewModel: MediaEventsTimelineScreenViewModelType
         state.groups = newGroups
         galleryItemIDs = newGalleryItemIDs
         
-        state.isBackPaginating = timelineViewState.timelineState.paginationState.backward == .paginating
+        state.canBackPaginate = timelineViewState.timelineState.paginationState.backward != .endReached
         state.shouldShowEmptyState = newGroups.isEmpty && timelineViewState.timelineState.paginationState.backward == .endReached
         backPaginateIfNecessary(backPaginationState: timelineViewState.timelineState.paginationState.backward)
     }

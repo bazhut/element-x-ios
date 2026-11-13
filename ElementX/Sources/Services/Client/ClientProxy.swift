@@ -179,7 +179,7 @@ class ClientProxy: ClientProxyProtocol {
         searchService = SearchServiceProxy(searchService: client.searchService(),
                                            timelineItemFactory: RoomTimelineItemFactory(userID: searchUserID,
                                                                                         attributedStringBuilder: AttributedStringBuilder(cacheKey: "search",
-                                                                                                                                         mentionBuilder: PlainMentionBuilder()),
+                                                                                                                                         mentionBuilder: PlainMentionBuilder(), rendersEmoticonsAsImages: false),
                                                                                         stateEventStringBuilder: RoomStateEventStringBuilder(userID: searchUserID)))
         
         capabilities = HomeserverCapabilitiesProxy(underlyingCapabilities: client.homeserverCapabilities())
@@ -357,6 +357,15 @@ class ClientProxy: ClientProxyProtocol {
             return .success(result)
         } catch {
             MXLog.error("Failed checking hasDevicesToVerifyAgainst with error: \(error)")
+            return .failure(.sdkError(error))
+        }
+    }
+    
+    func hasEncryptedRooms() async -> Result<Bool, ClientProxyError> {
+        do {
+            return try await .success(client.hasEncryptedRooms(timeout: 5))
+        } catch {
+            MXLog.error("Failed checking hasEncryptedRooms with error: \(error)")
             return .failure(.sdkError(error))
         }
     }
@@ -1456,7 +1465,7 @@ private struct ClientProxyServices {
         let roomListService = syncService.roomListService()
         
         let roomMessageEventStringBuilder = RoomMessageEventStringBuilder(attributedStringBuilder: AttributedStringBuilder(cacheKey: "roomList",
-                                                                                                                           mentionBuilder: PlainMentionBuilder()),
+                                                                                                                           mentionBuilder: PlainMentionBuilder(), rendersEmoticonsAsImages: false),
                                                                           style: .senderPrefixed)
         
         eventStringBuilder = try RoomEventStringBuilder(stateEventStringBuilder: RoomStateEventStringBuilder(userID: client.userId()),
