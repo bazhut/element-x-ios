@@ -53,7 +53,7 @@ struct EmojiPickerScreenViewModelTests {
     mutating func customEmojis(mode: EmojiPickerScreenMode, isOffered: Bool) async throws {
         // Given a user with a custom emoji pack.
         let clientProxy = ClientProxyMock(.init())
-        clientProxy.accountDataClosure = { eventType in
+        clientProxy.accountDataEventTypeClosure = { eventType in
             eventType == "im.ponies.user_emotes" ? .success(#"{ "images": { "parrot": { "url": "mxc://example.com/parrot" } } }"#) : .success(nil)
         }
         let emojiProvider = EmojiProvider(customEmojiLoader: ImagePackEmojiLoader(clientProxy: clientProxy), userSettings: .mock())

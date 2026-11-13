@@ -17,10 +17,10 @@ struct SharedEmojiPackSourceTests {
     @Test("Nothing is downloaded when no shared pack is configured")
     func fetchWithoutURL() async {
         var downloadCount = 0
-        let source = SharedEmojiPackSource(url: nil, dataLoader: { _ in
+        let source = SharedEmojiPackSource(url: nil) { _ in
             downloadCount += 1
             return Data()
-        })
+        }
         
         #expect(await source.fetch() == nil)
         #expect(downloadCount == 0)
@@ -63,9 +63,9 @@ struct SharedEmojiPackSourceTests {
     
     @Test("Nothing is returned when the pack can't be downloaded")
     func fetchFailure() async {
-        let source = SharedEmojiPackSource(url: packURL, dataLoader: { _ in
+        let source = SharedEmojiPackSource(url: packURL) { _ in
             throw SharedEmojiPackSource.DownloadError.unexpectedResponse
-        })
+        }
         #expect(await source.fetch() == nil)
     }
 }

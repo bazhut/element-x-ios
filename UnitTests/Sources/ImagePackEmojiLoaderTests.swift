@@ -112,7 +112,7 @@ struct ImagePackEmojiLoaderTests {
     
     private func makeClientProxy(accountData: [String: String]) -> ClientProxyMock {
         let clientProxy = ClientProxyMock(.init())
-        clientProxy.accountDataClosure = { eventType in
+        clientProxy.accountDataEventTypeClosure = { eventType in
             .success(accountData[eventType])
         }
         return clientProxy
