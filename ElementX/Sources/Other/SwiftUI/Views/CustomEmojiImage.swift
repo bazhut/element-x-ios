@@ -12,7 +12,7 @@ struct CustomEmojiImage: View {
     let url: URL
     let size: CGFloat
     let mediaProvider: MediaProviderProtocol?
-
+    
     var body: some View {
         // Reaction keys carry no mimetype, so always hint `image/gif` to take LoadableImage's animated path.
         // Kingfisher sniffs the actual format, so static images still render (full size, no thumbnail).

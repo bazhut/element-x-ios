@@ -138,10 +138,6 @@ private nonisolated struct JSONObjectKeyScanner {
         return scanner.keysOfMember(named: name)
     }
     
-    private init(bytes: [UInt8]) {
-        self.bytes = bytes
-    }
-    
     private mutating func keysOfMember(named name: String) -> [String]? {
         guard consume(UInt8(ascii: "{")) else { return nil }
         while let key = nextKey() {
