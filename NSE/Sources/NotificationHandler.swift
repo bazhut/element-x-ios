@@ -72,6 +72,15 @@ nonisolated class NotificationHandler {
                                                      mediaProvider: userSession.mediaProvider)
             
             deliverNotification()
+        case let .shouldRing(isVoiceCall, expirationDate):
+            await notificationContentBuilder.process(notificationContent: &notificationContent,
+                                                     notificationItem: notificationItemProxy,
+                                                     mediaProvider: userSession.mediaProvider)
+            notificationContentBuilder.processRingingCall(notificationContent: &notificationContent,
+                                                          isVoiceCall: isVoiceCall,
+                                                          expirationDate: expirationDate)
+            
+            deliverNotification()
         }
     }
     
@@ -260,8 +269,9 @@ nonisolated class NotificationHandler {
             try await CXProvider.reportNewIncomingVoIPPushPayload(payload.dictionary)
             MXLog.info("Call notification delegated to CallKit")
         } catch {
-            MXLog.error("Failed reporting voip call with error: \(error). Handling as push notification")
-            return .shouldDisplay
+            // Reporting needs the filtering entitlement, so ring with the notification instead.
+            MXLog.error("Failed reporting voip call with error: \(error). Handling as ringing push notification")
+            return .shouldRing(isVoiceCall: payload.isVoiceCall, expirationDate: expirationDate)
         }
         
         return .processedShouldDiscard
@@ -269,6 +279,7 @@ nonisolated class NotificationHandler {
     
     private enum NotificationProcessingResult {
         case shouldDisplay
+        case shouldRing(isVoiceCall: Bool, expirationDate: Date)
         case processedShouldDiscard
         case unsupportedShouldDiscard
     }

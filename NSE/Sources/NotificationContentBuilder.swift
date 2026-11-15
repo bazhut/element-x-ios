@@ -96,6 +96,18 @@ nonisolated struct NotificationContentBuilder {
         }
     }
     
+    /// Turns a processed call notification into one that rings until the call stops ringing.
+    func processRingingCall(notificationContent: inout UNMutableNotificationContent,
+                            isVoiceCall: Bool,
+                            expirationDate: Date) {
+        notificationContent.categoryIdentifier = NotificationConstants.Category.incomingCall
+        notificationContent.body = isVoiceCall ? L10n.notificationIncomingAudioCall : L10n.notificationIncomingCall
+        notificationContent.sound = NotificationTone.ringtone.notificationSound
+        notificationContent.interruptionLevel = .timeSensitive
+        notificationContent.callExpirationDate = expirationDate
+        notificationContent.isVoiceCall = isVoiceCall
+    }
+    
     // MARK: - Private
     
     private func processEmpty(_ notificationContent: inout UNMutableNotificationContent) {

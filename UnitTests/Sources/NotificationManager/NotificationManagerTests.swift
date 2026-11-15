@@ -43,8 +43,8 @@ final class NotificationManagerTests {
     
     // MARK: - Device token
     
-    @Test
-    func registeringHandsTheTokenToEveryAccount() async {
+    @Test("Registering hands the device token to every account")
+    func registerDeviceToken() async {
         let alice = makeService("@alice:example.com")
         let bob = makeService("@bob:example.com")
         notificationManager.add(alice.service)
@@ -57,8 +57,8 @@ final class NotificationManagerTests {
         #expect(bob.service.registerDeviceTokenReceivedDeviceToken == deviceToken)
     }
     
-    @Test
-    func anAccountAddedAfterwardsGetsTheSavedToken() async {
+    @Test("An account added afterwards gets the saved device token")
+    func addAccountAfterRegistering() async {
         let deviceToken = Data("1234".utf8)
         await notificationManager.register(with: deviceToken)
         let alice = makeService("@alice:example.com")
@@ -71,8 +71,8 @@ final class NotificationManagerTests {
         #expect(alice.service.registerDeviceTokenReceivedDeviceToken == deviceToken)
     }
     
-    @Test
-    func aReplacedServiceRegistersAgainAndTheOldOneIsIgnored() async {
+    @Test("A replaced service registers again and the old one is ignored")
+    func replaceService() async {
         let oldBadgeCountSubject = CurrentValueSubject<Int, Never>(3)
         let oldAlice = makeService("@alice:example.com")
         oldAlice.service.badgeCountPublisher = oldBadgeCountSubject.asCurrentValuePublisher()
@@ -90,8 +90,8 @@ final class NotificationManagerTests {
         #expect(appSettings.lastKnownBadgeCount == 1)
     }
     
-    @Test
-    func theTokenIsForgottenOnceTheLastAccountIsRemoved() async throws {
+    @Test("The device token is forgotten once the last account is removed")
+    func removeLastAccount() async throws {
         notificationManager.add(makeService("@alice:example.com").service)
         await notificationManager.register(with: Data("1234".utf8))
         notificationManager.remove(userID: "@alice:example.com")
@@ -106,8 +106,8 @@ final class NotificationManagerTests {
     
     // MARK: - Permission
     
-    @Test
-    func addingAnAccountRegistersWhenPermissionWasGiven() async {
+    @Test("Adding an account registers when permission was given")
+    func addAccountWithPermission() async {
         notificationManager.delegate = self
         
         await waitForConfirmation("registerForRemoteNotifications should be called", timeout: .seconds(10)) { confirm in
@@ -118,8 +118,8 @@ final class NotificationManagerTests {
         #expect(authorizationStatusWasGranted)
     }
     
-    @Test
-    func addingAnAccountRegistersEvenWhenItIsOff() async {
+    @Test("Adding an account registers even when its notifications are off")
+    func addDisabledAccount() async {
         notificationManager.delegate = self
         
         // So that accounts turned off delete any pusher left on their homeserver.
@@ -131,8 +131,8 @@ final class NotificationManagerTests {
         #expect(authorizationStatusWasGranted)
     }
     
-    @Test
-    func addingAnAccountNeverAsksForPermission() async throws {
+    @Test("Adding an account never asks for permission")
+    func addAccountWithoutPermission() async throws {
         notificationCenter.authorizationStatusReturnValue = .notDetermined
         notificationManager.delegate = self
         
@@ -143,8 +143,8 @@ final class NotificationManagerTests {
         #expect(!authorizationStatusWasGranted)
     }
     
-    @Test
-    func anAccountAskingForPermissionRequestsAuthorization() async {
+    @Test("An account asking for permission requests authorization")
+    func requestAuthorization() async {
         let alice = makeService("@alice:example.com")
         notificationManager.add(alice.service)
         
@@ -159,8 +159,8 @@ final class NotificationManagerTests {
         #expect(notificationCenter.requestAuthorizationOptionsReceivedOptions == [.alert, .sound, .badge])
     }
     
-    @Test
-    func grantingPermissionRegistersForRemoteNotifications() async {
+    @Test("Granting permission registers for remote notifications")
+    func grantPermission() async {
         notificationCenter.authorizationStatusReturnValue = .notDetermined
         notificationManager.delegate = self
         let alice = makeService("@alice:example.com")
@@ -174,8 +174,8 @@ final class NotificationManagerTests {
         #expect(notificationCenter.requestAuthorizationOptionsReceivedOptions == [.alert, .sound, .badge])
     }
     
-    @Test
-    func askingForPermissionWithEveryAccountOffDoesNothing() async throws {
+    @Test("Asking for permission with every account off does nothing")
+    func requestAuthorizationWithEveryAccountOff() async throws {
         let alice = makeService("@alice:example.com", isEnabled: false)
         notificationManager.add(alice.service)
         
@@ -187,16 +187,16 @@ final class NotificationManagerTests {
     
     // MARK: - Badge
     
-    @Test
-    func appBadgeSumsEveryAccount() {
+    @Test("The app badge sums every account")
+    func appBadgeSum() {
         notificationManager.add(makeService("@alice:example.com", badgeCount: 3).service)
         notificationManager.add(makeService("@bob:example.com", badgeCount: 2).service)
         
         #expect(appSettings.lastKnownBadgeCount == 5)
     }
     
-    @Test
-    func appBadgeFollowsAnAccountsCount() {
+    @Test("The app badge follows an account's count")
+    func appBadgeUpdates() {
         let badgeCountSubject = CurrentValueSubject<Int, Never>(3)
         let alice = makeService("@alice:example.com")
         alice.service.badgeCountPublisher = badgeCountSubject.asCurrentValuePublisher()
@@ -207,8 +207,8 @@ final class NotificationManagerTests {
         #expect(appSettings.lastKnownBadgeCount == 7)
     }
     
-    @Test
-    func appBadgeDropsARemovedAccount() {
+    @Test("The app badge drops a removed account")
+    func appBadgeRemovedAccount() {
         notificationManager.add(makeService("@alice:example.com", badgeCount: 3).service)
         notificationManager.add(makeService("@bob:example.com", badgeCount: 2).service)
         
@@ -217,8 +217,8 @@ final class NotificationManagerTests {
         #expect(appSettings.lastKnownBadgeCount == 3)
     }
     
-    @Test
-    func appBadgeIsLeftAloneWithoutAnAccount() {
+    @Test("The app badge is left alone without an account")
+    func appBadgeWithoutAccount() {
         appSettings.lastKnownBadgeCount = 4
         
         notificationManager.remove(userID: "@alice:example.com")
@@ -227,8 +227,8 @@ final class NotificationManagerTests {
         #expect(!notificationCenter.setBadgeCountCalled)
     }
     
-    @Test
-    func updatingTheAppBadge() async {
+    @Test("Updating the app badge sets it on the notification center")
+    func updateAppBadge() async {
         await waitForConfirmation("The app badge should be set", timeout: .seconds(10)) { confirm in
             notificationCenter.setBadgeCountClosure = { _ in confirm() }
             notificationManager.add(makeService("@alice:example.com", badgeCount: 7).service)
@@ -237,8 +237,8 @@ final class NotificationManagerTests {
         #expect(notificationCenter.setBadgeCountReceivedNewBadgeCount == 7)
     }
     
-    @Test
-    func resettingStopsReceivingNotifications() async {
+    @Test("Resetting stops receiving notifications")
+    func reset() async {
         notificationManager.delegate = self
         appSettings.lastKnownBadgeCount = 4
         
@@ -254,8 +254,8 @@ final class NotificationManagerTests {
     
     // MARK: - Delivered notifications
     
-    @Test
-    func removingNotificationsOnlyTouchesThatAccount() async throws {
+    @Test("Removing an account's notifications only touches that account")
+    func removeNotifications() async throws {
         notificationCenter.deliveredNotificationsReturnValue = try [notification("alice room", roomID: "!room:example.com", receiverID: "@alice:example.com"),
                                                                     notification("bob room", roomID: "!room:example.com", receiverID: "@bob:example.com"),
                                                                     notification("alice other", roomID: "!other:example.com", receiverID: "@alice:example.com"),
@@ -274,16 +274,16 @@ final class NotificationManagerTests {
     
     // MARK: - System
     
-    @Test
-    func whenShowLocalNotification_notificationRequestGetsAdded() async throws {
+    @Test("Showing a local notification adds a notification request")
+    func showLocalNotification() async throws {
         await notificationManager.showLocalNotification(with: "Title", subtitle: "Subtitle")
         let request = try #require(notificationCenter.addReceivedRequest)
         #expect(request.content.title == "Title")
         #expect(request.content.subtitle == "Subtitle")
     }
     
-    @Test
-    func whenStart_notificationCategoriesAreSet() {
+    @Test("Starting sets the notification categories")
+    func notificationCategories() {
         let replyAction = UNTextInputNotificationAction(identifier: NotificationConstants.Action.inlineReply,
                                                         title: L10n.actionQuickReply,
                                                         options: [])
@@ -296,25 +296,33 @@ final class NotificationManagerTests {
                                                     actions: [],
                                                     intentIdentifiers: [],
                                                     options: [])
-        #expect(notificationCenter.setNotificationCategoriesReceivedCategories == [messageCategory, inviteCategory])
+        
+        let answerCallAction = UNNotificationAction(identifier: NotificationConstants.Action.answerCall,
+                                                    title: L10n.actionJoin,
+                                                    options: [.foreground])
+        let incomingCallCategory = UNNotificationCategory(identifier: NotificationConstants.Category.incomingCall,
+                                                          actions: [answerCallAction],
+                                                          intentIdentifiers: [],
+                                                          options: [])
+        #expect(notificationCenter.setNotificationCategoriesReceivedCategories == [messageCategory, inviteCategory, incomingCallCategory])
     }
     
-    @Test
-    func whenStart_delegateIsSet() throws {
+    @Test("Starting sets the notification center delegate")
+    func notificationCenterDelegate() throws {
         let delegate = try #require(notificationCenter.delegate)
         #expect(delegate.isEqual(notificationManager))
     }
     
-    @Test
-    func whenWillPresentNotificationsDelegateNotSet_CorrectPresentationOptionsReturned() async throws {
+    @Test("Notifications are presented when there is no delegate")
+    func presentationOptionsWithoutDelegate() async throws {
         let archiver = MockCoder(requiringSecureCoding: false)
         let notification = try #require(UNNotification(coder: archiver))
         let options = await notificationManager.userNotificationCenter(UNUserNotificationCenter.current(), willPresent: notification)
         #expect(options == [.badge, .sound, .list, .banner])
     }
     
-    @Test
-    func whenWillPresentNotificationsDelegateSetAndNotificationsShoudNotBeDisplayed_CorrectPresentationOptionsReturned() async throws {
+    @Test("Notifications are hidden when the delegate says not to display them")
+    func presentationOptionsHidden() async throws {
         shouldDisplayInAppNotificationReturnValue = false
         notificationManager.delegate = self
         
@@ -323,8 +331,8 @@ final class NotificationManagerTests {
         #expect(options == [])
     }
     
-    @Test
-    func whenWillPresentNotificationsDelegateSetAndNotificationsShoudBeDisplayed_CorrectPresentationOptionsReturned() async throws {
+    @Test("Notifications are presented when the delegate says to display them")
+    func presentationOptionsShown() async throws {
         shouldDisplayInAppNotificationReturnValue = true
         notificationManager.delegate = self
         
@@ -333,8 +341,8 @@ final class NotificationManagerTests {
         #expect(options == [.badge, .sound, .list, .banner])
     }
     
-    @Test
-    func whenNotificationCenterReceivedResponseInLineReply_delegateIsCalled() async throws {
+    @Test("An inline reply is handed to the delegate")
+    func inlineReply() async throws {
         handleInlineReplyDelegateCalled = false
         notificationManager.delegate = self
         let response = try UNTextInputNotificationResponse.with(userInfo: [AnyHashable: Any](), actionIdentifier: NotificationConstants.Action.inlineReply)
@@ -342,11 +350,20 @@ final class NotificationManagerTests {
         #expect(handleInlineReplyDelegateCalled)
     }
     
-    @Test
-    func whenNotificationCenterReceivedResponseWithActionIdentifier_delegateIsCalled() async throws {
+    @Test("Tapping a notification is handed to the delegate")
+    func notificationTapped() async throws {
         notificationTappedDelegateCalled = false
         notificationManager.delegate = self
         let response = try UNTextInputNotificationResponse.with(userInfo: [AnyHashable: Any](), actionIdentifier: UNNotificationDefaultActionIdentifier)
+        await notificationManager.userNotificationCenter(UNUserNotificationCenter.current(), didReceive: response)
+        #expect(notificationTappedDelegateCalled)
+    }
+    
+    @Test("Answering a ringing call notification is handled like tapping it")
+    func answerCallAction() async throws {
+        notificationTappedDelegateCalled = false
+        notificationManager.delegate = self
+        let response = try UNTextInputNotificationResponse.with(userInfo: [AnyHashable: Any](), actionIdentifier: NotificationConstants.Action.answerCall)
         await notificationManager.userNotificationCenter(UNUserNotificationCenter.current(), didReceive: response)
         #expect(notificationTappedDelegateCalled)
     }
