@@ -33,26 +33,6 @@ nonisolated extension UNNotificationContent {
     @objc var threadRootEventID: String? {
         userInfo[NotificationConstants.UserInfoKey.threadRootEventIdentifier] as? String
     }
-    
-    /// When the incoming call this notification rings for stops ringing.
-    @objc var callExpirationDate: Date? {
-        userInfo[NotificationConstants.UserInfoKey.callExpirationDate] as? Date
-    }
-    
-    /// Whether the incoming call this notification rings for is voice only.
-    @objc var isVoiceCall: Bool {
-        userInfo[NotificationConstants.UserInfoKey.isVoiceCall] as? Bool ?? false
-    }
-    
-    /// Whether this notification rings for an incoming call that is still ringing at the given date.
-    func isRingingCall(at date: Date) -> Bool {
-        guard categoryIdentifier == NotificationConstants.Category.incomingCall,
-              let callExpirationDate else {
-            return false
-        }
-        
-        return date < callExpirationDate
-    }
 }
 
 nonisolated extension UNMutableNotificationContent {
@@ -98,24 +78,6 @@ nonisolated extension UNMutableNotificationContent {
         }
         set {
             userInfo[NotificationConstants.UserInfoKey.threadRootEventIdentifier] = newValue
-        }
-    }
-    
-    override var callExpirationDate: Date? {
-        get {
-            userInfo[NotificationConstants.UserInfoKey.callExpirationDate] as? Date
-        }
-        set {
-            userInfo[NotificationConstants.UserInfoKey.callExpirationDate] = newValue
-        }
-    }
-    
-    override var isVoiceCall: Bool {
-        get {
-            userInfo[NotificationConstants.UserInfoKey.isVoiceCall] as? Bool ?? false
-        }
-        set {
-            userInfo[NotificationConstants.UserInfoKey.isVoiceCall] = newValue
         }
     }
 }

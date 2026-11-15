@@ -49,15 +49,7 @@ final class NotificationManager: NSObject, NotificationManagerProtocol {
                                                     actions: [],
                                                     intentIdentifiers: [],
                                                     options: [])
-        
-        let answerCallAction = UNNotificationAction(identifier: NotificationConstants.Action.answerCall,
-                                                    title: L10n.actionJoin,
-                                                    options: [.foreground])
-        let incomingCallCategory = UNNotificationCategory(identifier: NotificationConstants.Category.incomingCall,
-                                                          actions: [answerCallAction],
-                                                          intentIdentifiers: [],
-                                                          options: [])
-        notificationCenter.setNotificationCategories([messageCategory, inviteCategory, incomingCallCategory])
+        notificationCenter.setNotificationCategories([messageCategory, inviteCategory])
         notificationCenter.delegate = self
         
         NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)
@@ -237,7 +229,7 @@ extension NotificationManager: UNUserNotificationCenterDelegate {
             await delegate?.handleInlineReply(self,
                                               content: response.notification.request.content,
                                               replyText: response.userText)
-        case UNNotificationDefaultActionIdentifier, NotificationConstants.Action.answerCall:
+        case UNNotificationDefaultActionIdentifier:
             await delegate?.notificationTapped(content: response.notification.request.content)
         default:
             break

@@ -26,7 +26,7 @@ nonisolated struct NotificationContentBuilderTests {
                                                                       userSession: NSEUserSessionMock(.init()))
     }
     
-    @Test("A DM message notification shows the sender")
+    @Test
     mutating func dmMessageNotification() async {
         let notificationItem = NotificationItemProxyMock(.init(roomID: "!test:matrix.org",
                                                                receiverID: "@bob:matrix.org",
@@ -53,7 +53,7 @@ nonisolated struct NotificationContentBuilderTests {
         #expect(notificationContent.attachments == [])
     }
     
-    @Test("A DM message notification with a mention marks the mention")
+    @Test
     mutating func dmMessageNotificationWithMention() async {
         let notificationItem = NotificationItemProxyMock(.init(roomID: "!test:matrix.org",
                                                                receiverID: "@bob:matrix.org",
@@ -82,7 +82,7 @@ nonisolated struct NotificationContentBuilderTests {
         #expect(notificationContent.attachments == [])
     }
     
-    @Test("A threaded DM message notification is grouped by thread")
+    @Test
     mutating func dmMessageNotificationWithThread() async {
         let notificationItem = NotificationItemProxyMock(.init(roomID: "!test:matrix.org",
                                                                receiverID: "@bob:matrix.org",
@@ -111,7 +111,7 @@ nonisolated struct NotificationContentBuilderTests {
         #expect(notificationContent.attachments == [])
     }
     
-    @Test("A threaded DM message notification with a mention is grouped by thread")
+    @Test
     mutating func dmMessageNotificationWithThreadAndMention() async {
         let notificationItem = NotificationItemProxyMock(.init(roomID: "!test:matrix.org",
                                                                receiverID: "@bob:matrix.org",
@@ -140,7 +140,7 @@ nonisolated struct NotificationContentBuilderTests {
         #expect(notificationContent.attachments == [])
     }
     
-    @Test("A room message notification shows the sender and the room")
+    @Test
     mutating func roomMessageNotification() async {
         let notificationItem = NotificationItemProxyMock(.init(roomID: "!testroom:matrix.org",
                                                                receiverID: "@bob:matrix.org",
@@ -167,7 +167,7 @@ nonisolated struct NotificationContentBuilderTests {
         #expect(notificationContent.attachments == [])
     }
     
-    @Test("A room message notification with a mention marks the mention")
+    @Test
     mutating func roomMessageNotificationWithMention() async {
         let notificationItem = NotificationItemProxyMock(.init(roomID: "!testroom:matrix.org",
                                                                receiverID: "@bob:matrix.org",
@@ -194,7 +194,7 @@ nonisolated struct NotificationContentBuilderTests {
         #expect(notificationContent.attachments == [])
     }
     
-    @Test("A threaded room message notification names the thread")
+    @Test
     mutating func roomMessageNotificationWithThread() async {
         let notificationItem = NotificationItemProxyMock(.init(roomID: "!testroom:matrix.org",
                                                                receiverID: "@bob:matrix.org",
@@ -221,7 +221,7 @@ nonisolated struct NotificationContentBuilderTests {
         #expect(notificationContent.attachments == [])
     }
     
-    @Test("A live location notification uses the live location text")
+    @Test
     mutating func liveLocationStartNotification() async {
         let event = TimelineEventSDKMock()
         event.eventIdReturnValue = UUID().uuidString
@@ -249,7 +249,7 @@ nonisolated struct NotificationContentBuilderTests {
         #expect(notificationContent.sound != nil)
     }
     
-    @Test("Any other state event uses the generic notification text")
+    @Test
     mutating func otherStateEventNotification() async {
         let event = TimelineEventSDKMock()
         event.eventIdReturnValue = UUID().uuidString
@@ -273,7 +273,7 @@ nonisolated struct NotificationContentBuilderTests {
         #expect(notificationContent.body == L10n.notification)
     }
     
-    @Test("A threaded room message notification with a mention names the thread and marks the mention")
+    @Test
     mutating func roomMessageNotificationWithThreadAndMention() async {
         let notificationItem = NotificationItemProxyMock(.init(roomID: "!testroom:matrix.org",
                                                                receiverID: "@bob:matrix.org",
@@ -297,52 +297,5 @@ nonisolated struct NotificationContentBuilderTests {
         #expect(notificationContent.sound != nil)
         #expect(notificationContent.threadIdentifier == "bob:matrix.org!testroom:matrix.orgthread123")
         #expect(notificationContent.attachments == [])
-    }
-    
-    @Test("A call that CallKit can't present rings with the notification until it expires")
-    mutating func ringingCallNotification() async {
-        let notificationItem = NotificationItemProxyMock(.init(roomID: "!testroom:matrix.org",
-                                                               receiverID: "@bob:matrix.org",
-                                                               senderDisplayName: "Alice",
-                                                               roomDisplayName: "General",
-                                                               roomJoinedMembers: 5,
-                                                               isRoomDirect: false,
-                                                               isRoomPrivate: false,
-                                                               isNoisy: true))
-        let expirationDate = Date.now.addingTimeInterval(30)
-        await notificationContentBuilder.process(notificationContent: &notificationContent,
-                                                 notificationItem: notificationItem,
-                                                 mediaProvider: mediaProvider)
-        notificationContentBuilder.processRingingCall(notificationContent: &notificationContent,
-                                                      isVoiceCall: true,
-                                                      expirationDate: expirationDate)
-        
-        #expect(notificationContent.categoryIdentifier == NotificationConstants.Category.incomingCall)
-        #expect(notificationContent.body == L10n.notificationIncomingAudioCall)
-        #expect(notificationContent.sound == NotificationTone.ringtone.notificationSound)
-        #expect(notificationContent.interruptionLevel == .timeSensitive)
-        #expect(notificationContent.roomID == "!testroom:matrix.org")
-        #expect(notificationContent.receiverID == "@bob:matrix.org")
-        #expect(notificationContent.isVoiceCall)
-        #expect(notificationContent.isRingingCall(at: .now))
-        #expect(!notificationContent.isRingingCall(at: expirationDate.addingTimeInterval(1)))
-    }
-    
-    @Test("A ringing video call uses the video call text")
-    mutating func ringingVideoCallNotification() {
-        notificationContentBuilder.processRingingCall(notificationContent: &notificationContent,
-                                                      isVoiceCall: false,
-                                                      expirationDate: .now.addingTimeInterval(30))
-        
-        #expect(notificationContent.body == L10n.notificationIncomingCall)
-        #expect(!notificationContent.isVoiceCall)
-    }
-    
-    @Test("A message notification never counts as a ringing call")
-    mutating func messageNotificationIsNotRingingCall() {
-        notificationContent.categoryIdentifier = NotificationConstants.Category.message
-        notificationContent.callExpirationDate = .now.addingTimeInterval(30)
-        
-        #expect(!notificationContent.isRingingCall(at: .now))
     }
 }

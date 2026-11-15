@@ -379,8 +379,6 @@ class AppCoordinator: AppCoordinatorProtocol, NotificationManagerDelegate, Secur
         let appRoute: AppRoute
         if isInvite {
             appRoute = .room(roomID: roomID, via: [])
-        } else if content.isRingingCall(at: .now) {
-            appRoute = .call(roomID: roomID, isVoiceCall: content.isVoiceCall, answeredFromCallKit: false)
         } else if appSettings.threadsEnabled, let threadRootEventID = content.threadRootEventID {
             appRoute = .thread(roomID: roomID, threadRootEventID: threadRootEventID, focusEventID: eventID)
         } else if let eventID {

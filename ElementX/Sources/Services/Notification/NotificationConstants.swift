@@ -16,18 +16,14 @@ nonisolated enum NotificationConstants {
         static let threadRootEventIdentifier = "thread_root_event_id"
         static let pusherNotificationClientIdentifier = "pusher_notification_client_identifier"
         static let receiverIdentifier = "receiver_id"
-        static let callExpirationDate = "call_expiration_date"
-        static let isVoiceCall = "is_voice_call"
     }
     
     enum Category {
         static let message = "message"
         static let invite = "invite"
-        static let incomingCall = "incoming_call"
     }
     
     enum Action {
         static let inlineReply = "inline-reply"
-        static let answerCall = "answer-call"
     }
 }
