@@ -239,6 +239,19 @@ final nonisolated class AppSettings: @unchecked Sendable {
         pushGatewayBaseURL.appending(path: "_matrix/push/v1/notify")
     }
     
+    /// The app ID of the pusher that rings calls through PushKit, used by the NSE when CallKit can't be reached from it.
+    var voipPusherAppID: String {
+        #if DEBUG
+        InfoPlistReader.main.baseBundleIdentifier + ".ios.voip.dev"
+        #else
+        InfoPlistReader.main.baseBundleIdentifier + ".ios.voip.prod"
+        #endif
+    }
+    
+    /// This device's base64 encoded PushKit token, shared with the NSE.
+    @UserPreference
+    var voipPushToken: String?
+    
     @UserPreference(defaultValue: false)
     var hasRunNotificationPermissionsOnboarding: Bool
     

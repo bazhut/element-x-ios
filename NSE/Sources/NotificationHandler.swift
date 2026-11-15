@@ -260,11 +260,44 @@ nonisolated class NotificationHandler {
             try await CXProvider.reportNewIncomingVoIPPushPayload(payload.dictionary)
             MXLog.info("Call notification delegated to CallKit")
         } catch {
-            MXLog.error("Failed reporting voip call with error: \(error). Handling as push notification")
+            // Reporting needs the notification filtering entitlement, PushKit doesn't.
+            MXLog.error("Failed reporting voip call with error: \(error). Ringing through PushKit and handling as push notification")
+            await ringThroughPushKit(payload)
             return .shouldDisplay
         }
         
         return .processedShouldDiscard
+    }
+    
+    /// Asks the push gateway to send a VoIP push for the call to this device, so that the app reports it to CallKit.
+    private func ringThroughPushKit(_ payload: VoIPPushPayload) async {
+        guard let pushKey = userSettings.app.voipPushToken else {
+            MXLog.error("Missing the PushKit token, the call can't ring")
+            return
+        }
+        
+        do {
+            var request = URLRequest(url: userSettings.app.pushGatewayNotifyEndpoint, timeoutInterval: 10)
+            request.httpMethod = "POST"
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            request.httpBody = try payload.pushGatewayRequestBody(appID: userSettings.app.voipPusherAppID, pushKey: pushKey)
+            
+            let (data, response) = try await URLSession.shared.data(for: request)
+            let statusCode = (response as? HTTPURLResponse)?.statusCode ?? 0
+            let rejectedPushKeys = (try? JSONDecoder().decode(PushGatewayResponse.self, from: data))?.rejected ?? []
+            
+            if statusCode == 200, rejectedPushKeys.isEmpty {
+                MXLog.info("Asked the push gateway to ring the call through PushKit")
+            } else {
+                MXLog.error("The push gateway didn't ring the call, status: \(statusCode), token rejected: \(!rejectedPushKeys.isEmpty)")
+            }
+        } catch {
+            MXLog.error("Failed asking the push gateway to ring the call with error: \(error)")
+        }
+    }
+    
+    private nonisolated struct PushGatewayResponse: Decodable {
+        let rejected: [String]
     }
     
     private enum NotificationProcessingResult {

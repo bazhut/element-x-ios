@@ -605,7 +605,15 @@ final class ElementCallManager: NSObject, ElementCallManagerProtocol, PKPushRegi
     
     // MARK: - PKPushRegistryDelegate
     
-    func pushRegistry(_ registry: PKPushRegistry, didUpdate pushCredentials: PKPushCredentials, for type: PKPushType) { }
+    func pushRegistry(_ registry: PKPushRegistry, didUpdate pushCredentials: PKPushCredentials, for type: PKPushType) {
+        MXLog.info("Received a PushKit token, sharing it with the NSE")
+        appSettings.voipPushToken = pushCredentials.token.base64EncodedString()
+    }
+    
+    func pushRegistry(_ registry: PKPushRegistry, didInvalidatePushTokenFor type: PKPushType) {
+        MXLog.info("The PushKit token was invalidated")
+        appSettings.voipPushToken = nil
+    }
     
     func pushRegistry(_ registry: PKPushRegistry, didReceiveIncomingPushWith payload: PKPushPayload, for type: PKPushType, completion: @escaping () -> Void) {
         guard let push = VoIPPushPayload(dictionary: payload.dictionaryPayload) else {
