@@ -67,7 +67,7 @@ final class ElementCallManagerTests {
         pushRegistry = nil
     }
     
-    @Test
+    @Test("An incoming call push is reported to CallKit with video")
     func incomingCall() async throws {
         #expect(!callProvider.reportNewIncomingCallWithUpdateCompletionCalled)
         let deferredReport = deferFulfillment(manager.actionsPublisher) { $0 == .incomingCallReported }
@@ -90,7 +90,7 @@ final class ElementCallManagerTests {
         try await deferredReport.fulfill()
     }
     
-    @Test
+    @Test("A voice call push is reported with video for the web view to start")
     func incomingVoiceCall() async {
         #expect(!callProvider.reportNewIncomingCallWithUpdateCompletionCalled)
         
@@ -114,8 +114,8 @@ final class ElementCallManagerTests {
         }
     }
     
-    @Test
-    func callIsTimingOut() async throws {
+    @Test("An unanswered call ends as unanswered once it expires")
+    func callTimeout() async throws {
         #expect(!callProvider.reportNewIncomingCallWithUpdateCompletionCalled)
         
         let (endedCalls, endedCallsContinuation) = AsyncStream<CXCallEndedReason>.makeStream()
@@ -143,8 +143,8 @@ final class ElementCallManagerTests {
         #expect(reason == .unanswered, "Call should have ended as unanswered")
     }
     
-    @Test
-    func lifetimeIsCapped() async throws {
+    @Test("A call rings for at most 90 seconds whatever its lifetime")
+    func ringDurationCap() async throws {
         #expect(!callProvider.reportNewIncomingCallWithUpdateCompletionCalled)
         
         let (endedCalls, endedCallsContinuation) = AsyncStream<CXCallEndedReason>.makeStream()
@@ -169,15 +169,15 @@ final class ElementCallManagerTests {
         #expect(reason == .unanswered, "Call should have ended as unanswered")
     }
     
-    @Test
+    @Test("Call intents use the raw values of the spec")
     func callIntentRawValues() {
         // Test to ensure that the implicit rawValue of the string enum matches the MSC values
         #expect(CallIntent.audio.rawValue == "audio")
         #expect(CallIntent.video.rawValue == "video")
     }
     
-    @Test
-    func timeoutClearsIncomingCallStateBeforeNextPush() async throws {
+    @Test("A timed out call is cleared before the next push")
+    func timeoutClearsIncomingCall() async throws {
         // Drive push #1 to its 60s unanswered timeout
         let (endedCalls, endedCallsContinuation) = AsyncStream<CXCallEndedReason>.makeStream()
         callProvider.reportCallWithEndedAtReasonClosure = { _, _, reason in
@@ -214,8 +214,8 @@ final class ElementCallManagerTests {
         #expect(unansweredCount == 1)
     }
     
-    @Test
-    func setupCallSessionCancelsPendingUnansweredTimeout() async throws {
+    @Test("Setting up a call session cancels the ringing call's timeout")
+    func setupCancelsTimeout() async throws {
         // Schedule the 60s unanswered timer via an incoming push
         await waitForConfirmation { confirmation in
             let payload = PKPushPayloadMock().updatingExpiration(currentDate, lifetime: 60)
@@ -244,8 +244,8 @@ final class ElementCallManagerTests {
         try await deferredUnansweredCall.fulfill()
     }
     
-    @Test
-    func expiredPushReportsMissedCall() async throws {
+    @Test("An expired push is reported as a missed call")
+    func expiredPush() async throws {
         // An expired push is a real call we missed, so it should show up in Recents as one.
         let pushPayload = PKPushPayloadMock().updatingExpiration(currentDate, lifetime: 20)
         currentDate = currentDate.addingTimeInterval(60)
@@ -261,8 +261,8 @@ final class ElementCallManagerTests {
         #expect(!service.observeIncomingCallRoomIDRtcNotificationIDCalled)
     }
     
-    @Test
-    func duplicateRoomPushReportsCallAsHandled() async {
+    @Test("A push for the room of the ongoing call is reported as handled")
+    func duplicateRoomPush() async {
         // A duplicate push for an ongoing call is reported as handled, leaving the ongoing call alone.
         await startCallSession(kind: .webView)
         let pushPayload = PKPushPayloadMock().updatingExpiration(currentDate, lifetime: 30)
@@ -275,8 +275,8 @@ final class ElementCallManagerTests {
         #expect(service.ongoingCallRoomIDPublisher.value == "!room:example.com")
     }
     
-    @Test
-    func webViewCallSessionIsNotTrackedByCallKit() async {
+    @Test("A web view call is not tracked by CallKit")
+    func webViewCallSession() async {
         // CallKit tracking a call gives this process exclusive media access, which starves the web
         // view. So a web view call is only ever tracked on the app side.
         await startCallSession(kind: .webView)
@@ -287,8 +287,8 @@ final class ElementCallManagerTests {
         #expect(!callProvider.reportOutgoingCallWithConnectedAtCalled)
     }
     
-    @Test
-    func endingAReplacedCallLeavesTheCallThatReplacedItUp() async throws {
+    @Test("Ending a replaced call leaves the call that replaced it up")
+    func endReplacedCall() async throws {
         appSettings.nativeCallEnabled = true
         
         // Leaving a call to start one in another room requests an end call action for the first,
@@ -335,8 +335,8 @@ final class ElementCallManagerTests {
         #expect(service.ongoingCallRoomIDPublisher.value == nil)
     }
     
-    @Test
-    func tearingDownAnotherRoomLeavesTheOngoingCallUp() async {
+    @Test("Tearing down another room's call leaves the ongoing call up")
+    func tearDownOtherRoom() async {
         // A call screen that is dismissed after another room's call replaced it must not take the
         // new call down with it.
         await startCallSession(kind: .webView)
@@ -380,8 +380,8 @@ final class ElementCallManagerTests {
     
     // MARK: - Busy
     
-    @Test
-    func aCallWhileAnotherRingsIsReportedAsMissed() async throws {
+    @Test("A call while another one rings is reported as missed")
+    func callWhileRinging() async throws {
         await reportIncomingPush(isVoiceCall: false)
         let ringingUUID = try #require(callProvider.reportNewIncomingCallWithUpdateCompletionReceivedArguments?.uuid)
         
@@ -394,8 +394,8 @@ final class ElementCallManagerTests {
         #expect(!callProvider.reportCallWithEndedAtReasonReceivedInvocations.contains { $0.uuid == ringingUUID })
     }
     
-    @Test
-    func aCallDuringAWebViewCallIsReportedAsMissed() async {
+    @Test("A call during a web view call is reported as missed")
+    func callDuringWebViewCall() async {
         await startCallSession(kind: .webView)
         
         let otherCall = PKPushPayloadMock().updatingExpiration(currentDate, lifetime: 60)
@@ -425,8 +425,8 @@ final class ElementCallManagerTests {
         await expectImmediatelyEndedCallReported(forPayload: otherCall, expectedReason: .unanswered)
     }
     
-    @Test
-    func theSameRingPushedTwiceIsReportedAsHandled() async throws {
+    @Test("The same ring pushed twice is reported as handled")
+    func duplicateRing() async throws {
         await reportIncomingPush(isVoiceCall: false)
         let ringingUUID = try #require(callProvider.reportNewIncomingCallWithUpdateCompletionReceivedArguments?.uuid)
         
@@ -436,8 +436,8 @@ final class ElementCallManagerTests {
         #expect(!callProvider.reportCallWithEndedAtReasonReceivedInvocations.contains { $0.uuid == ringingUUID })
     }
     
-    @Test
-    func anAnsweredCallThatNeverOpensStopsBlockingNewCalls() async throws {
+    @Test("An answered call that never opens stops blocking new calls")
+    func answeredCallNeverOpens() async throws {
         await reportIncomingPush(isVoiceCall: false)
         try await answerReportedCall()
         
@@ -450,8 +450,8 @@ final class ElementCallManagerTests {
         #expect(!callProvider.reportCallWithEndedAtReasonReceivedInvocations.contains { $0.reason == .unanswered })
     }
     
-    @Test
-    func aCallAfterADroppedAnsweredCallStillTimesOut() async throws {
+    @Test("A call after a dropped answered call still times out")
+    func callAfterDroppedAnsweredCall() async throws {
         await reportIncomingPush(isVoiceCall: false)
         try await answerReportedCall()
         serviceActions.send(.callSessionEnded(roomID: "!room:example.com", reason: nil))
@@ -473,8 +473,8 @@ final class ElementCallManagerTests {
         try await deferredTimeout.fulfill()
     }
     
-    @Test
-    func unopenedAnsweredCallIsDropped() async throws {
+    @Test("An answered call that nothing opens is dropped after 30 seconds")
+    func unopenedAnsweredCall() async throws {
         await reportIncomingPush(isVoiceCall: false)
         await clock.waitForScheduledSleep()
         try await answerReportedCall()
@@ -492,8 +492,8 @@ final class ElementCallManagerTests {
         #expect(!callProvider.reportCallWithEndedAtReasonReceivedInvocations.contains { $0.reason == .unanswered })
     }
     
-    @Test
-    func droppedAnsweredCallUnblocksNewCalls() async throws {
+    @Test("Dropping an answered call unblocks new calls")
+    func droppedAnsweredCall() async throws {
         await reportIncomingPush(isVoiceCall: false)
         try await answerReportedCall()
         
@@ -506,8 +506,8 @@ final class ElementCallManagerTests {
     
     // MARK: - Native calls
     
-    @Test
-    func nativeModeReportsVoiceCallsWithoutVideo() async {
+    @Test("Native calls report a voice call without video once the receiver's service exists")
+    func nativeVoiceCall() async {
         appSettings.nativeCallEnabled = true
         
         await reportIncomingPush(isVoiceCall: true)
@@ -515,8 +515,18 @@ final class ElementCallManagerTests {
         #expect(callProvider.reportNewIncomingCallWithUpdateCompletionReceivedArguments?.update.hasVideo == false)
     }
     
-    @Test
-    func nativeModeStillReportsVideoCallsWithVideo() async {
+    @Test("Native calls report a voice call with video at cold launch, for answering it to open the app")
+    func nativeVoiceCallAtColdLaunch() async {
+        appSettings.nativeCallEnabled = true
+        
+        // Bob's service is only added once the app's screens start.
+        await reportIncomingPush(isVoiceCall: true, receiverID: bobID)
+        
+        #expect(callProvider.reportNewIncomingCallWithUpdateCompletionReceivedArguments?.update.hasVideo == true)
+    }
+    
+    @Test("Native calls still report a video call with video")
+    func nativeVideoCall() async {
         appSettings.nativeCallEnabled = true
         
         await reportIncomingPush(isVoiceCall: false)
@@ -524,8 +534,8 @@ final class ElementCallManagerTests {
         #expect(callProvider.reportNewIncomingCallWithUpdateCompletionReceivedArguments?.update.hasVideo == true)
     }
     
-    @Test
-    func answeringInNativeModeKeepsTheCallUp() async throws {
+    @Test("Answering a native call keeps the CallKit call up")
+    func nativeAnswer() async throws {
         appSettings.nativeCallEnabled = true
         await reportIncomingPush(isVoiceCall: false)
         await clock.waitForScheduledSleep()
@@ -539,8 +549,8 @@ final class ElementCallManagerTests {
         #expect(!callProvider.reportCallWithEndedAtReasonCalled)
     }
     
-    @Test
-    func answeredNativeCallEndsWhenNothingTakesItOver() async throws {
+    @Test("An answered native call ends as failed when nothing takes it over")
+    func nativeAnswerWatchdog() async throws {
         appSettings.nativeCallEnabled = true
         await reportIncomingPush(isVoiceCall: false)
         await clock.waitForScheduledSleep()
@@ -563,8 +573,8 @@ final class ElementCallManagerTests {
         #expect(reason == .failed)
     }
     
-    @Test
-    func droppedAnsweredNativeCallEndsAsFailed() async throws {
+    @Test("A dropped answered native call ends as failed")
+    func droppedNativeAnswer() async throws {
         appSettings.nativeCallEnabled = true
         await reportIncomingPush(isVoiceCall: false)
         let answeredUUID = try await answerReportedCall()
@@ -577,8 +587,8 @@ final class ElementCallManagerTests {
         #expect(callProvider.reportCallWithEndedAtReasonReceivedArguments?.reason == .failed)
     }
     
-    @Test
-    func nativeCallStackTakesOverTheAnsweredCall() async throws {
+    @Test("The native call stack takes over the answered call")
+    func nativeTakeOver() async throws {
         appSettings.nativeCallEnabled = true
         await reportIncomingPush(isVoiceCall: false)
         await clock.waitForScheduledSleep()
@@ -605,8 +615,8 @@ final class ElementCallManagerTests {
         #expect(service.systemEventReceivedReceivedInvocations == [.endCallRequested(roomID: "!room:example.com")])
     }
     
-    @Test
-    func nativeCallStackForAnotherRoomReportsANewCall() async throws {
+    @Test("A native call in another room is reported as a new call")
+    func nativeCallInOtherRoom() async throws {
         appSettings.nativeCallEnabled = true
         await reportIncomingPush(isVoiceCall: false)
         await clock.waitForScheduledSleep()
@@ -674,8 +684,8 @@ final class ElementCallManagerTests {
     
     // MARK: - Service
     
-    @Test
-    func ringIsWatchedByReceiver() async {
+    @Test("A ring is watched through its receiver's service")
+    func ringWatchedByReceiver() async {
         let bobActions = PassthroughSubject<ElementCallServiceAction, Never>()
         let bob = makeCallService(userID: "@bob:matrix.org", actions: bobActions)
         manager.add(bob)
@@ -713,8 +723,8 @@ final class ElementCallManagerTests {
         #expect(service.stopObservingIncomingCallCalled)
     }
     
-    @Test
-    func declineGoesThroughReceiver() async throws {
+    @Test("Declining a call goes through its receiver's service")
+    func declineThroughReceiver() async throws {
         let bob = makeCallService(userID: "@bob:matrix.org")
         manager.add(bob)
         await reportIncomingPush(isVoiceCall: false, receiverID: "@bob:matrix.org")
@@ -734,8 +744,8 @@ final class ElementCallManagerTests {
         #expect(!service.declineCallRoomIDRtcNotificationIDCalled)
     }
     
-    @Test
-    func answeredWebCallOpens() async throws {
+    @Test("An answered web view call opens")
+    func answeredWebCall() async throws {
         await reportIncomingPush(isVoiceCall: false)
         let uuid = try #require(callProvider.reportNewIncomingCallWithUpdateCompletionReceivedArguments?.uuid)
         let deferredAnswer = deferFulfillment(manager.actionsPublisher) { $0 == .callAnswered(userID: "@alice:matrix.org", roomID: "!room:example.com", isVoiceCall: false) }
@@ -767,8 +777,8 @@ final class ElementCallManagerTests {
         try await deferredAnswer.fulfill()
     }
     
-    @Test
-    func webCallSetupIsImmediate() {
+    @Test("A web view call is set up straight away")
+    func webCallSetup() {
         serviceActions.send(.callSessionStarted(roomID: "!room:example.com", roomDisplayName: "welcome", isVideo: true, kind: .webView))
         
         #expect(service.callSessionSetUpRoomIDIsAcceptedReceivedArguments?.roomID == "!room:example.com")
@@ -777,8 +787,8 @@ final class ElementCallManagerTests {
         #expect(service.ongoingCallRoomIDPublisher.value == "!room:example.com")
     }
     
-    @Test
-    func nativeCallSetupWaitsForCallKit() async {
+    @Test("A native call is set up once CallKit started it")
+    func nativeCallSetup() async {
         await waitForConfirmation { confirmation in
             service.callSessionSetUpRoomIDIsAcceptedClosure = { [callProvider] _, _ in
                 #expect(callProvider?.reportCallWithUpdatedCalled == true)
@@ -790,8 +800,8 @@ final class ElementCallManagerTests {
         #expect(service.callSessionSetUpRoomIDIsAcceptedCallsCount == 1)
     }
     
-    @Test
-    func failedNativeCallStartIsStillSetUp() async {
+    @Test("A native call is still set up when CallKit fails to start it")
+    func failedNativeCallStart() async {
         callController.requestCompletionClosure = { _, completion in
             completion(NSError(domain: "CallKit", code: 1))
         }
@@ -802,8 +812,8 @@ final class ElementCallManagerTests {
         #expect(service.callSessionSetUpRoomIDIsAcceptedCallsCount == 1)
     }
     
-    @Test
-    func callKitEventsReachService() async throws {
+    @Test("CallKit events reach the service of the ongoing call")
+    func callKitEvents() async throws {
         await startCallSession(kind: .native(takesOverAnsweredCall: false))
         let callID = try #require(callProvider.reportCallWithUpdatedReceivedArguments?.uuid)
         let provider = CXProvider(configuration: CXProviderConfiguration())
@@ -814,8 +824,8 @@ final class ElementCallManagerTests {
         #expect(service.systemEventReceivedReceivedInvocations == [.audioSessionActivated, .microphoneMuteChanged(isMuted: true)])
     }
     
-    @Test
-    func nativeCallMuteReachesCallKit() async {
+    @Test("Muting a native call reaches CallKit")
+    func nativeCallMute() async {
         await startCallSession(kind: .native(takesOverAnsweredCall: false))
         
         serviceActions.send(.audioEnabledChanged(false, roomID: "!room:example.com"))
@@ -875,14 +885,14 @@ final class ElementCallManagerTests {
     
     // MARK: - Accounts
     
-    @Test
-    func pushWithoutReceiverFails() async {
+    @Test("A push without a receiver is reported as a failed call")
+    func pushWithoutReceiver() async {
         await expectImmediatelyEndedCallReported(forPayload: PKPushPayloadMock().updatingExpiration(currentDate, lifetime: 60).removingReceiverID(),
                                                  expectedReason: .failed)
     }
     
-    @Test
-    func ongoingCallHasOneOwner() async {
+    @Test("An ongoing call has a single owning account")
+    func ongoingCallOwner() async {
         let bobActions = PassthroughSubject<ElementCallServiceAction, Never>()
         let bob = makeCallService(userID: "@bob:matrix.org", actions: bobActions)
         manager.add(bob)
@@ -897,8 +907,8 @@ final class ElementCallManagerTests {
         #expect(service.ongoingCallRoomIDPublisher.value == "!room:example.com", "Bob's late end leaves Alice's call")
     }
     
-    @Test
-    func ringOfOtherAccountIsNotAdopted() async throws {
+    @Test("A native call doesn't adopt another account's ring")
+    func otherAccountRing() async throws {
         appSettings.nativeCallEnabled = true
         await reportIncomingPush(isVoiceCall: false, receiverID: "@bob:matrix.org")
         let ringingUUID = try #require(callProvider.reportNewIncomingCallWithUpdateCompletionReceivedArguments?.uuid)
@@ -941,8 +951,8 @@ final class ElementCallManagerTests {
         #expect(callProvider.reportCallWithEndedAtReasonCallsCount == 1)
     }
     
-    @Test
-    func otherAccountsReportsLeaveOngoingCall() async {
+    @Test("Another account's reports leave the ongoing call alone")
+    func otherAccountReports() async {
         appSettings.nativeCallEnabled = true
         let bobActions = PassthroughSubject<ElementCallServiceAction, Never>()
         manager.add(makeCallService(userID: "@bob:matrix.org", actions: bobActions))
@@ -994,8 +1004,8 @@ final class ElementCallManagerTests {
         }
     }
     
-    @Test
-    func callKitMuteAndEndReachOwnerOnly() async throws {
+    @Test("CallKit mute and end actions only reach the call's owner")
+    func callKitEventsOwner() async throws {
         let bobActions = PassthroughSubject<ElementCallServiceAction, Never>()
         let bob = makeCallService(userID: "@bob:matrix.org", actions: bobActions)
         manager.add(bob)
@@ -1015,8 +1025,8 @@ final class ElementCallManagerTests {
     
     // MARK: - Late services
     
-    @Test
-    func lateServiceWatchesRing() async {
+    @Test("A service added late watches the ring of its account")
+    func lateServiceRing() async {
         let bob = makeCallService(userID: "@bob:matrix.org")
         await reportIncomingPush(isVoiceCall: false, receiverID: "@bob:matrix.org")
         
@@ -1034,8 +1044,8 @@ final class ElementCallManagerTests {
         #expect(bob.observeIncomingCallRoomIDRtcNotificationIDReceivedArguments?.rtcNotificationID == "$000")
     }
     
-    @Test
-    func lateServiceSendsPendingDecline() async throws {
+    @Test("A service added late sends the pending decline")
+    func lateServiceDecline() async throws {
         let bob = makeCallService(userID: "@bob:matrix.org")
         await reportIncomingPush(isVoiceCall: false, receiverID: "@bob:matrix.org")
         let callID = try #require(callProvider.reportNewIncomingCallWithUpdateCompletionReceivedArguments?.uuid)
@@ -1056,8 +1066,8 @@ final class ElementCallManagerTests {
         #expect(!bob.observeIncomingCallRoomIDRtcNotificationIDCalled)
     }
     
-    @Test
-    func replacedServiceHandsOverWatch() async throws {
+    @Test("A replaced service hands the ring over to its replacement")
+    func replacedService() async throws {
         let oldBobActions = PassthroughSubject<ElementCallServiceAction, Never>()
         let oldBob = makeCallService(userID: "@bob:matrix.org", actions: oldBobActions)
         manager.add(oldBob)
@@ -1115,8 +1125,8 @@ final class ElementCallManagerTests {
     
     // MARK: - Removed and replaced services
     
-    @Test
-    func removingAccountEndsRing() async throws {
+    @Test("Removing an account ends its ring")
+    func removeAccountRing() async throws {
         let bob = makeCallService(userID: "@bob:matrix.org")
         manager.add(bob)
         await reportIncomingPush(isVoiceCall: false, receiverID: "@bob:matrix.org")
@@ -1133,8 +1143,8 @@ final class ElementCallManagerTests {
         #expect(bob.stopObservingIncomingCallCalled, "Cleared while its service is still there")
     }
     
-    @Test
-    func removingAccountDropsPendingDecline() async throws {
+    @Test("Removing an account drops its pending decline")
+    func removeAccountDecline() async throws {
         let bob = makeCallService(userID: "@bob:matrix.org")
         await reportIncomingPush(isVoiceCall: false, receiverID: "@bob:matrix.org")
         let callID = try #require(callProvider.reportNewIncomingCallWithUpdateCompletionReceivedArguments?.uuid)
@@ -1170,8 +1180,8 @@ final class ElementCallManagerTests {
         #expect(!callProvider.reportCallWithEndedAtReasonReceivedInvocations.contains { $0.reason == .unanswered })
     }
     
-    @Test
-    func removingAccountEndsAnsweredNativeCall() async throws {
+    @Test("Removing an account ends its answered native call")
+    func removeAccountNativeCall() async throws {
         appSettings.nativeCallEnabled = true
         manager.add(makeCallService(userID: "@bob:matrix.org"))
         await reportIncomingPush(isVoiceCall: false, receiverID: "@bob:matrix.org")
@@ -1187,8 +1197,8 @@ final class ElementCallManagerTests {
         #expect(callProvider.reportCallWithEndedAtReasonCallsCount == 1, "Nothing answered is left")
     }
     
-    @Test
-    func removalDuringSetUpStillReplies() async throws {
+    @Test("Removing an account during a call set-up still replies to it")
+    func removeDuringSetUp() async throws {
         appSettings.nativeCallEnabled = true
         let bobActions = PassthroughSubject<ElementCallServiceAction, Never>()
         let bob = makeCallService(userID: "@bob:matrix.org", actions: bobActions)
