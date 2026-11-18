@@ -5441,37 +5441,6 @@ nonisolated class ElementCallServiceMock: ElementCallServiceProtocol, @unchecked
             return joinedRoomRoomIDReturnValue
         }
     }
-    //MARK: - setNativeCallStackEnabled
-
-    private let setNativeCallStackEnabledCallsCountLock = NSLock()
-    private nonisolated(unsafe) var setNativeCallStackEnabledUnderlyingCallsCount = 0
-    var setNativeCallStackEnabledCallsCount: Int {
-        get { setNativeCallStackEnabledCallsCountLock.withLock { setNativeCallStackEnabledUnderlyingCallsCount } }
-        set { setNativeCallStackEnabledCallsCountLock.withLock { setNativeCallStackEnabledUnderlyingCallsCount = newValue } }
-    }
-    var setNativeCallStackEnabledCalled: Bool {
-        return setNativeCallStackEnabledCallsCount > 0
-    }
-    private let setNativeCallStackEnabledReceivedIsEnabledLock = NSLock()
-    private nonisolated(unsafe) var setNativeCallStackEnabledUnderlyingReceivedIsEnabled: Bool?
-    var setNativeCallStackEnabledReceivedIsEnabled: Bool? {
-        get { setNativeCallStackEnabledReceivedIsEnabledLock.withLock { setNativeCallStackEnabledUnderlyingReceivedIsEnabled } }
-        set { setNativeCallStackEnabledReceivedIsEnabledLock.withLock { setNativeCallStackEnabledUnderlyingReceivedIsEnabled = newValue } }
-    }
-    private let setNativeCallStackEnabledReceivedInvocationsLock = NSLock()
-    private nonisolated(unsafe) var setNativeCallStackEnabledUnderlyingReceivedInvocations: [Bool] = []
-    var setNativeCallStackEnabledReceivedInvocations: [Bool] {
-        get { setNativeCallStackEnabledReceivedInvocationsLock.withLock { setNativeCallStackEnabledUnderlyingReceivedInvocations } }
-        set { setNativeCallStackEnabledReceivedInvocationsLock.withLock { setNativeCallStackEnabledUnderlyingReceivedInvocations = newValue } }
-    }
-    nonisolated(unsafe) var setNativeCallStackEnabledClosure: ((Bool) -> Void)?
-
-    func setNativeCallStackEnabled(_ isEnabled: Bool) {
-        setNativeCallStackEnabledCallsCountLock.withLock { setNativeCallStackEnabledUnderlyingCallsCount += 1 }
-        setNativeCallStackEnabledReceivedIsEnabled = isEnabled
-        setNativeCallStackEnabledReceivedInvocationsLock.withLock { setNativeCallStackEnabledUnderlyingReceivedInvocations.append(isEnabled) }
-        setNativeCallStackEnabledClosure?(isEnabled)
-    }
     //MARK: - handleNativeCallRequest
 
     private let handleNativeCallRequestRoomProxyIsVoiceCallAnsweredFromCallKitCallsCountLock = NSLock()
@@ -5548,6 +5517,23 @@ nonisolated class ElementCallServiceMock: ElementCallServiceProtocol, @unchecked
     func restoreNativeCall() {
         restoreNativeCallCallsCountLock.withLock { restoreNativeCallUnderlyingCallsCount += 1 }
         restoreNativeCallClosure?()
+    }
+    //MARK: - endNativeCall
+
+    private let endNativeCallCallsCountLock = NSLock()
+    private nonisolated(unsafe) var endNativeCallUnderlyingCallsCount = 0
+    var endNativeCallCallsCount: Int {
+        get { endNativeCallCallsCountLock.withLock { endNativeCallUnderlyingCallsCount } }
+        set { endNativeCallCallsCountLock.withLock { endNativeCallUnderlyingCallsCount = newValue } }
+    }
+    var endNativeCallCalled: Bool {
+        return endNativeCallCallsCount > 0
+    }
+    nonisolated(unsafe) var endNativeCallClosure: (() -> Void)?
+
+    func endNativeCall() {
+        endNativeCallCallsCountLock.withLock { endNativeCallUnderlyingCallsCount += 1 }
+        endNativeCallClosure?()
     }
     //MARK: - setupCallSession
 
@@ -15890,6 +15876,37 @@ nonisolated class UserSessionManagerMock: UserSessionManagerProtocol, @unchecked
         addNewSessionReceivedUserSession = userSession
         addNewSessionReceivedInvocationsLock.withLock { addNewSessionUnderlyingReceivedInvocations.append(userSession) }
         addNewSessionClosure?(userSession)
+    }
+    //MARK: - selectAccount
+
+    private let selectAccountUserIDCallsCountLock = NSLock()
+    private nonisolated(unsafe) var selectAccountUserIDUnderlyingCallsCount = 0
+    var selectAccountUserIDCallsCount: Int {
+        get { selectAccountUserIDCallsCountLock.withLock { selectAccountUserIDUnderlyingCallsCount } }
+        set { selectAccountUserIDCallsCountLock.withLock { selectAccountUserIDUnderlyingCallsCount = newValue } }
+    }
+    var selectAccountUserIDCalled: Bool {
+        return selectAccountUserIDCallsCount > 0
+    }
+    private let selectAccountUserIDReceivedUserIDLock = NSLock()
+    private nonisolated(unsafe) var selectAccountUserIDUnderlyingReceivedUserID: String?
+    var selectAccountUserIDReceivedUserID: String? {
+        get { selectAccountUserIDReceivedUserIDLock.withLock { selectAccountUserIDUnderlyingReceivedUserID } }
+        set { selectAccountUserIDReceivedUserIDLock.withLock { selectAccountUserIDUnderlyingReceivedUserID = newValue } }
+    }
+    private let selectAccountUserIDReceivedInvocationsLock = NSLock()
+    private nonisolated(unsafe) var selectAccountUserIDUnderlyingReceivedInvocations: [String] = []
+    var selectAccountUserIDReceivedInvocations: [String] {
+        get { selectAccountUserIDReceivedInvocationsLock.withLock { selectAccountUserIDUnderlyingReceivedInvocations } }
+        set { selectAccountUserIDReceivedInvocationsLock.withLock { selectAccountUserIDUnderlyingReceivedInvocations = newValue } }
+    }
+    nonisolated(unsafe) var selectAccountUserIDClosure: ((String) -> Void)?
+
+    func selectAccount(userID: String) {
+        selectAccountUserIDCallsCountLock.withLock { selectAccountUserIDUnderlyingCallsCount += 1 }
+        selectAccountUserIDReceivedUserID = userID
+        selectAccountUserIDReceivedInvocationsLock.withLock { selectAccountUserIDUnderlyingReceivedInvocations.append(userID) }
+        selectAccountUserIDClosure?(userID)
     }
     //MARK: - logout
 

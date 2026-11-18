@@ -12,6 +12,9 @@ import SwiftState
 import SwiftUI
 
 enum UserSessionFlowCoordinatorAction {
+    case addAccount
+    case switchAccount(userID: String)
+    
     case logout
     case clearCache
     /// Logout without any confirmation. The account was deactivated.
@@ -154,14 +157,7 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
     }
     
     func start(animated: Bool) {
-        // TODO: Native calls run on the active account's service until each call builds its own stack.
-        userSession.elementCallService.setNativeCallStackEnabled(true)
         stateMachine.tryEvent(.start)
-    }
-    
-    func stop() {
-        // Releases the native call stack before the session goes or another account's flow starts.
-        userSession.elementCallService.setNativeCallStackEnabled(false)
     }
     
     func handleAppRoute(_ appRoute: AppRoute, animated: Bool) {
@@ -400,6 +396,11 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
             guard let self else { return }
             
             switch action {
+            case .addAccount:
+                actionsSubject.send(.addAccount)
+            case .switchAccount(let userID):
+                actionsSubject.send(.switchAccount(userID: userID))
+                
             case .dismiss:
                 navigationTabCoordinator.setSheetCoordinator(nil)
             case .clearCache:
