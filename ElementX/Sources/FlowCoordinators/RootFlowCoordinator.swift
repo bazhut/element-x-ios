@@ -74,7 +74,7 @@ class RootFlowCoordinator: FlowCoordinatorProtocol {
         case notPresented
         /// The call screen covers every account's screens.
         case fullScreen(PresentedCallScreen)
-        /// The call screen stays on the overlay but is hidden, in picture in picture or the system's call window.
+        /// The call screen stays on the overlay but is hidden, in picture in picture or, for a native call, behind the call bar.
         case minimized(PresentedCallScreen)
     }
     
@@ -601,12 +601,15 @@ class RootFlowCoordinator: FlowCoordinatorProtocol {
             
             switch context.toState {
             case .fullScreen:
+                navigationRootCoordinator.setMinimizedOverlayBar(nil)
                 navigationRootCoordinator.setOverlayPresentationMode(.fullScreen)
-            case .minimized:
+            case .minimized(let callScreen):
+                navigationRootCoordinator.setMinimizedOverlayBar(callBar(for: callScreen))
                 navigationRootCoordinator.setOverlayPresentationMode(.minimized)
             case .notPresented:
                 callScreenCancellable = nil
                 callScreenPictureInPictureController = nil
+                navigationRootCoordinator.setMinimizedOverlayBar(nil)
                 navigationRootCoordinator.setOverlayCoordinator(nil)
             }
         }
@@ -741,6 +744,25 @@ class RootFlowCoordinator: FlowCoordinatorProtocol {
                 callScreenStateMachine.tryEvent(.restore)
             }
         }
+    }
+    
+    /// The bar leading back to a minimized native call. A web view call minimizes to picture in picture instead.
+    private func callBar(for callScreen: PresentedCallScreen) -> AnyView? {
+        guard callScreen.isNative,
+              let controller = userSessionManager.session(for: callScreen.userID)?.elementCallService.nativeCallController else {
+            return nil
+        }
+        
+        return AnyView(NativeCallInProgressBar(controller: controller) { [weak self] in
+            self?.returnToMinimizedCall(callScreen)
+        })
+    }
+    
+    private func returnToMinimizedCall(_ callScreen: PresentedCallScreen) {
+        guard callScreenStateMachine.state == .minimized(callScreen) else { return }
+        
+        userSessionManager.session(for: callScreen.userID)?.elementCallService.restoreNativeCall()
+        callScreenStateMachine.tryEvent(.restore)
     }
     
     private func dismissCallScreen() {

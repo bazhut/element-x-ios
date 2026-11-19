@@ -95,6 +95,25 @@ final class NativeCallStackTests {
         #expect(system.answeredFromCallKit)
     }
     
+    @Test("Minimizing a call without a system window minimizes it to the app's call bar")
+    func minimizeToCallBar() async throws {
+        let stack = NativeCallStack(backend: ElementCallFakeMatrixBackend(),
+                                    system: system,
+                                    options: ElementCallOptions(isPictureInPictureEnabled: false),
+                                    style: .stock,
+                                    permissions: ElementCallFakeMediaPermissions())
+        var presentations: [NativeCallPresentation] = []
+        let cancellable = stack.actions.sink { presentations.append($0) }
+        stack.handleCallRequest(roomProxy: roomProxy(id: "!room:example.com"), isVoiceCall: true, answeredFromCallKit: false)
+        
+        let deferred = deferFulfillment(stack.actions) { $0 == .minimize }
+        stack.minimize()
+        try await deferred.fulfill()
+        
+        #expect(presentations == [.present, .minimize])
+        cancellable.cancel()
+    }
+    
     @Test("A call that ends dismisses its screen")
     func hangUp() async throws {
         stack.handleCallRequest(roomProxy: roomProxy(id: "!room:example.com"), isVoiceCall: false, answeredFromCallKit: false)
