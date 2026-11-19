@@ -186,13 +186,15 @@ private struct NavigationRootCoordinatorView: View {
     @Bindable var rootCoordinator: NavigationRootCoordinator
     
     var body: some View {
-        ZStack {
-            rootCoordinator.rootModule?.coordinator?.toPresentable()
-        }
-        .safeAreaInset(edge: .top, spacing: 0) {
+        // Stacked rather than a safe area inset, which the root's UIKit navigation bars don't follow.
+        VStack(spacing: 0) {
             if rootCoordinator.overlayPresentationMode == .minimized, let minimizedOverlayBar = rootCoordinator.minimizedOverlayBar {
                 minimizedOverlayBar
                     .transition(.move(edge: .top).combined(with: .opacity))
+            }
+            
+            ZStack {
+                rootCoordinator.rootModule?.coordinator?.toPresentable()
             }
         }
         .animation(.elementDefault, value: rootCoordinator.minimizedOverlayBar == nil)
