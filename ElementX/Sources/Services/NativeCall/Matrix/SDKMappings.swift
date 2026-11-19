@@ -156,6 +156,75 @@ nonisolated enum SDKMappings {
         }
     }
     
+    // MARK: Delayed events
+    
+    /// The MSC4140 request that schedules a state event, which the homeserver sends once `delay` passes without a restart.
+    static func delayedStateEventRequest(session: Session,
+                                         roomID: String,
+                                         eventType: String,
+                                         stateKey: String,
+                                         contentJSON: String,
+                                         delay: Duration) -> URLRequest? {
+        let delayMilliseconds = UInt64(delay / .milliseconds(1))
+        let path = "/_matrix/client/v3/rooms/\(pathSegment(roomID))/state/\(pathSegment(eventType))/\(pathSegment(stateKey))"
+        
+        guard var request = clientRequest(session: session, path: path, query: "org.matrix.msc4140.delay=\(delayMilliseconds)") else {
+            return nil
+        }
+        
+        request.httpMethod = "PUT"
+        request.httpBody = Data(contentJSON.utf8)
+        return request
+    }
+    
+    /// The MSC4140 request that restarts, cancels or sends a scheduled event.
+    static func delayedEventUpdateRequest(session: Session, delayID: String, action: String) -> URLRequest? {
+        let path = "/_matrix/client/unstable/org.matrix.msc4140/delayed_events/\(pathSegment(delayID))"
+        
+        guard var request = clientRequest(session: session, path: path, query: nil),
+              let body = try? JSONSerialization.data(withJSONObject: ["action": action]) else {
+            return nil
+        }
+        
+        request.httpMethod = "POST"
+        request.httpBody = body
+        return request
+    }
+    
+    /// The error a homeserver's refusal stands for, so that the core can tell an unsupported feature from a transient failure.
+    static func backendError(statusCode: Int, responseData: Data) -> ElementCallMatrixBackendError {
+        let json = (try? JSONSerialization.jsonObject(with: responseData)) as? [String: Any]
+        let errorCode = json?["errcode"] as? String
+        let retryAfter = (json?["retry_after_ms"] as? NSNumber).map { Duration.milliseconds($0.int64Value) }
+        // Only a refusal no Matrix code describes is final here: the core decides from the code otherwise.
+        let isPermanent = errorCode == nil && (400..<500).contains(statusCode) && statusCode != 429
+        
+        return ElementCallMatrixBackendError(errorCode: errorCode,
+                                             statusCode: statusCode,
+                                             retryAfter: retryAfter,
+                                             isPermanent: isPermanent,
+                                             reason: json?["error"] as? String ?? "The homeserver answered \(statusCode)")
+    }
+    
+    private static func clientRequest(session: Session, path: String, query: String?) -> URLRequest? {
+        let homeserverURL = session.homeserverUrl.hasSuffix("/") ? String(session.homeserverUrl.dropLast()) : session.homeserverUrl
+        let urlString = homeserverURL + path + (query.map { "?\($0)" } ?? "")
+        
+        guard let url = URL(string: urlString) else { return nil }
+        
+        var request = URLRequest(url: url, timeoutInterval: 15)
+        request.setValue("Bearer \(session.accessToken)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        return request
+    }
+    
+    /// Room IDs, event types and state keys hold characters such as `!`, `:` and `@` that a path segment must escape.
+    private static func pathSegment(_ value: String) -> String {
+        value.addingPercentEncoding(withAllowedCharacters: unreservedCharacters) ?? value
+    }
+    
+    private static let unreservedCharacters = CharacterSet(charactersIn: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~")
+    
     private static func date(milliseconds: UInt64) -> Date {
         Date(timeIntervalSince1970: Double(milliseconds) / 1000)
     }

@@ -53,24 +53,41 @@ final nonisolated class SDKMatrixBackend: ElementCallMatrixBackendProtocol {
         }
     }
     
-    /// The bindings have no delayed events (matrix-rust-sdk#6973), so this answers as a homeserver
-    /// without MSC4140: the core joins without a dead man's switch, never asks again this session, and
-    /// shortens the membership's lifetime instead.
+    /// Schedules the state event with the homeserver directly, as the bindings have no delayed events (matrix-rust-sdk#6973).
+    ///
+    /// A homeserver without MSC4140 refuses it with `M_UNRECOGNIZED`, and the core then joins without a dead
+    /// man's switch, never asks again this session, and shortens the membership's lifetime instead.
     func sendDelayedStateEvent(roomID: String, eventType: String, stateKey: String, contentJSON: String, delay: Duration) async throws(ElementCallMatrixBackendError) -> String {
-        throw Self.delayedEventsNotSupported
+        let response = try await sendDirectly("sendDelayedStateEvent(\(eventType))") { session in
+            SDKMappings.delayedStateEventRequest(session: session,
+                                                 roomID: roomID,
+                                                 eventType: eventType,
+                                                 stateKey: stateKey,
+                                                 contentJSON: contentJSON,
+                                                 delay: delay)
+        }
+        
+        guard let delayID = response["delay_id"] as? String else {
+            throw ElementCallMatrixBackendError(reason: "The homeserver scheduled the event without a delay ID")
+        }
+        return delayID
     }
     
+    // The sticky formats also need MSC4354, which isn't sent directly here.
     func sendDelayedStickyEvent(roomID: String, eventType: String, contentJSON: String, stickyDuration: Duration, delay: Duration) async throws(ElementCallMatrixBackendError) -> String {
-        throw Self.delayedEventsNotSupported
+        throw Self.delayedStickyEventsNotSupported
     }
     
-    // Never called: no delayed event was ever scheduled.
     func restartDelayedEvent(roomID: String, delayID: String) async throws(ElementCallMatrixBackendError) {
-        throw Self.delayedEventsNotSupported
+        _ = try await sendDirectly("restartDelayedEvent") { session in
+            SDKMappings.delayedEventUpdateRequest(session: session, delayID: delayID, action: "restart")
+        }
     }
     
     func cancelDelayedEvent(roomID: String, delayID: String) async throws(ElementCallMatrixBackendError) {
-        throw Self.delayedEventsNotSupported
+        _ = try await sendDirectly("cancelDelayedEvent") { session in
+            SDKMappings.delayedEventUpdateRequest(session: session, delayID: delayID, action: "cancel")
+        }
     }
     
     func sendStateEvent(roomID: String, eventType: String, stateKey: String, contentJSON: String) async throws(ElementCallMatrixBackendError) -> String {
@@ -194,8 +211,8 @@ final nonisolated class SDKMatrixBackend: ElementCallMatrixBackendProtocol {
     
     // MARK: - Private
     
-    private static let delayedEventsNotSupported = ElementCallMatrixBackendError(errorCode: "M_UNRECOGNIZED",
-                                                                                 reason: "Delayed events are not exposed by the SDK bindings")
+    private static let delayedStickyEventsNotSupported = ElementCallMatrixBackendError(errorCode: "M_UNRECOGNIZED",
+                                                                                       reason: "Delayed sticky events are not exposed by the SDK bindings")
     
     /// Taken per send rather than kept: a handle is cheap, and one held across calls outlives the
     /// room if we leave it.
@@ -205,6 +222,42 @@ final nonisolated class SDKMatrixBackend: ElementCallMatrixBackendProtocol {
             throw ElementCallMatrixBackendError(isPermanent: true, reason: "Not a joined room: \(roomID)")
         }
         return room
+    }
+    
+    /// Sends a request the bindings don't expose straight to the homeserver, with the session's current access token.
+    private func sendDirectly(_ description: String, request makeRequest: (Session) -> URLRequest?) async throws(ElementCallMatrixBackendError) -> [String: Any] {
+        logger?.log(.info, "backend: \(description)")
+        
+        let session: Session
+        do {
+            session = try client.session()
+        } catch {
+            throw SDKMappings.backendError(error)
+        }
+        
+        guard let request = makeRequest(session) else {
+            throw ElementCallMatrixBackendError(isPermanent: true, reason: "\(description): the request couldn't be built")
+        }
+        
+        let data: Data
+        let statusCode: Int
+        do {
+            let (responseData, response) = try await URLSession.shared.data(for: request)
+            data = responseData
+            statusCode = (response as? HTTPURLResponse)?.statusCode ?? 0
+        } catch {
+            // No answer at all: the network, which the core retries.
+            logger?.log(.warning, "backend: \(description) failed: \(error)")
+            throw ElementCallMatrixBackendError(reason: "\(description): \(error.localizedDescription)")
+        }
+        
+        guard statusCode == 200 else {
+            let error = SDKMappings.backendError(statusCode: statusCode, responseData: data)
+            logger?.log(.warning, "backend: \(description) answered \(statusCode) \(error.errorCode ?? "")")
+            throw error
+        }
+        
+        return (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] ?? [:]
     }
     
     /// Logged on entry, and failing as the core reads failures: which refusals retire a feature for
