@@ -30,25 +30,25 @@ struct CallInProgressBar: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: 8) {
-                CompoundIcon(\.voiceCallSolid, size: .small, relativeTo: .compound.bodyMDSemibold)
+                CompoundIcon(\.voiceCallSolid, size: .xSmall, relativeTo: .compound.bodySMSemibold)
                 
                 Text(roomName ?? L10n.commonCallInProgress)
-                    .font(.compound.bodyMDSemibold)
+                    .font(.compound.bodySMSemibold)
                     .lineLimit(1)
                 
                 Spacer(minLength: 0)
                 
                 if let connectedAt {
                     Text(timerInterval: connectedAt...Date.distantFuture, countsDown: false)
-                        .font(.compound.bodyMDSemibold)
+                        .font(.compound.bodySMSemibold)
                         .monospacedDigit()
                 }
             }
             .foregroundStyle(Color.compound.textOnSolidPrimary)
             .padding(.horizontal, 16)
-            .padding(.vertical, 10)
+            .padding(.vertical, 6)
             .frame(maxWidth: .infinity)
-            .background(Color.compound.bgAccentRest.ignoresSafeArea(edges: .top))
+            .background(Color.compound.bgAccentRest)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
