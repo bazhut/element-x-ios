@@ -141,3 +141,10 @@ nonisolated extension String {
         return link
     }
 }
+
+nonisolated extension String {
+    /// The image of a custom emoji when the string is a reaction key holding an `mxc://` URI (MSC4027).
+    var customEmojiURL: URL? {
+        hasPrefix("mxc://") ? URL(string: self) : nil
+    }
+}

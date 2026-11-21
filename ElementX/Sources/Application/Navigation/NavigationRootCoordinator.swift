@@ -70,6 +70,9 @@ import SwiftUI
     enum OverlayPresentationMode { case fullScreen, minimized }
     fileprivate var overlayPresentationMode: OverlayPresentationMode = .minimized
     
+    /// A bar shown above the root while the overlay is minimized, leading back to it.
+    fileprivate var minimizedOverlayBar: AnyView?
+    
     /// The lowest-level `AlertInfo`, directly available to the root of the app.
     var alertInfo: AlertInfo<UUID>?
     
@@ -149,6 +152,11 @@ import SwiftUI
         }
     }
     
+    /// Sets the bar shown above the root while the overlay is minimized, or removes it.
+    func setMinimizedOverlayBar(_ bar: AnyView?) {
+        minimizedOverlayBar = bar
+    }
+    
     // MARK: - CoordinatorProtocol
     
     func toPresentable() -> AnyView {
@@ -178,9 +186,18 @@ private struct NavigationRootCoordinatorView: View {
     @Bindable var rootCoordinator: NavigationRootCoordinator
     
     var body: some View {
-        ZStack {
-            rootCoordinator.rootModule?.coordinator?.toPresentable()
+        // Stacked rather than a safe area inset, which the root's UIKit navigation bars don't follow.
+        VStack(spacing: 0) {
+            if rootCoordinator.overlayPresentationMode == .minimized, let minimizedOverlayBar = rootCoordinator.minimizedOverlayBar {
+                minimizedOverlayBar
+                    .transition(.move(edge: .top).combined(with: .opacity))
+            }
+            
+            ZStack {
+                rootCoordinator.rootModule?.coordinator?.toPresentable()
+            }
         }
+        .animation(.elementDefault, value: rootCoordinator.minimizedOverlayBar == nil)
         .alert(item: $rootCoordinator.alertInfo)
         .animation(.elementDefault, value: rootCoordinator.rootModule)
         .accessibilityHidden(rootCoordinator.overlayModule?.coordinator != nil && rootCoordinator.overlayPresentationMode == .fullScreen)

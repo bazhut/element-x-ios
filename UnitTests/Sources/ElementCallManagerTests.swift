@@ -516,6 +516,16 @@ final class ElementCallManagerTests {
         #expect(callProvider.reportNewIncomingCallWithUpdateCompletionReceivedArguments?.update.hasVideo == false)
     }
     
+    @Test("With native calls on, a voice call is reported with video at cold launch, for answering it to open the app")
+    func nativeIncomingVoiceCallAtColdLaunch() async {
+        appSettings.nativeCallEnabled = true
+        
+        // Bob's service is only added once the app's screens start.
+        await reportIncomingPush(isVoiceCall: true, receiverID: bobID)
+        
+        #expect(callProvider.reportNewIncomingCallWithUpdateCompletionReceivedArguments?.update.hasVideo == true)
+    }
+    
     @Test("With native calls on, a video call is still reported with video")
     func nativeIncomingVideoCall() async {
         appSettings.nativeCallEnabled = true

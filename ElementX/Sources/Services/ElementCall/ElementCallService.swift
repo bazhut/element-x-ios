@@ -230,7 +230,10 @@ final class ElementCallService: ElementCallServiceProtocol {
         
         // The stats overlay is raw RTP counters, so it follows whatever already reveals developer
         // surface. Screen sharing stays off until the broadcast extension that makes it work lands.
-        let options = ElementCallOptions(isDeveloperModeEnabled: userSettings.app.developerOptionsEnabled)
+        // A minimized call goes to the app's own call bar rather than a Picture in Picture window,
+        // and outside the app the system's call indicator stands for it, as for a phone call.
+        let options = ElementCallOptions(isPictureInPictureEnabled: false,
+                                         isDeveloperModeEnabled: userSettings.app.developerOptionsEnabled)
         
         let stack = NativeCallStack(backend: backend,
                                     system: NativeCallSystem(service: self),

@@ -11,8 +11,8 @@ import Testing
 import UIKit
 
 struct EmojiProviderTests {
-    @Test @MainActor
-    func emojisLoadedCategoriesAreLoadedFromLoader() async {
+    @Test("The categories are loaded from the loader") @MainActor
+    func categoriesLoadedFromLoader() async {
         let item = EmojiItem(label: "test", unicode: "test", keywords: ["1", "2"], shortcodes: ["1", "2"])
         let category = EmojiCategory(id: "test", emojis: [item])
         
@@ -25,8 +25,8 @@ struct EmojiProviderTests {
         #expect(emojiLoaderMock.categories == categories)
     }
     
-    @Test @MainActor
-    func emojisLoadedAndSearchStringEmptyAllCategoriesReturned() async {
+    @Test("An empty search returns every category") @MainActor
+    func emptySearchReturnsAllCategories() async {
         let item = EmojiItem(label: "test", unicode: "test", keywords: ["1", "2"], shortcodes: ["1", "2"])
         let category = EmojiCategory(id: "test", emojis: [item])
         
@@ -39,8 +39,8 @@ struct EmojiProviderTests {
         #expect(emojiLoaderMock.categories == categories)
     }
     
-    @Test @MainActor
-    func emojisLoadedSecondTimeCachedValuesAreUsed() async {
+    @Test("The built-in emojis are cached after the first load") @MainActor
+    func cachedEmojis() async {
         let item = EmojiItem(label: "test", unicode: "test", keywords: ["1", "2"], shortcodes: ["1", "2"])
         let item2 = EmojiItem(label: "test2", unicode: "test2", keywords: ["3", "4"], shortcodes: ["3", "4"])
         let categoriesForFirstLoad = [EmojiCategory(id: "test",
@@ -60,8 +60,8 @@ struct EmojiProviderTests {
         #expect(categories == categoriesForFirstLoad)
     }
     
-    @Test @MainActor
-    func emojisSearchedCorrectNumberOfCategoriesReturned() async {
+    @Test("A search only returns the categories containing a match") @MainActor
+    func searchFiltersCategories() async {
         let searchString = "smile"
         var categories = [EmojiCategory]()
         let item0WithSearchString = EmojiItem(label: "emoji0", unicode: "\(searchString)_123", keywords: ["key1", "key1"], shortcodes: ["key1", "key1"])
@@ -89,10 +89,33 @@ struct EmojiProviderTests {
         #expect(result.count == 2)
         #expect(result.first?.emojis.count == 4)
     }
+    
+    @Test("Custom emojis are listed after the frequently used ones and before the built-in categories") @MainActor
+    func providerIncludesCustomEmojis() async {
+        let smile = EmojiItem(label: "smile", unicode: "😄", keywords: [], shortcodes: [])
+        let parrot = EmojiItem(label: "parrot", unicode: ":parrot:", keywords: [], shortcodes: ["parrot"], imageURL: URL(string: "mxc://example.com/parrot"))
+        let emojiProvider = EmojiProvider(loader: EmojiLoaderMock(categories: [EmojiCategory(id: "people", emojis: [smile])]),
+                                          customEmojiLoader: EmojiLoaderMock(categories: [EmojiCategory(id: "custom", emojis: [parrot])]),
+                                          userSettings: .mock())
+        emojiProvider.markEmojiAsFrequentlyUsed("mxc://example.com/parrot")
+        
+        let categories = await emojiProvider.categories(searchString: nil)
+        
+        #expect(categories.map(\.id) == [EmojiCategory.frequentlyUsedCategoryIdentifier, "custom", "people"])
+        #expect(categories.first?.emojis.first?.key == "mxc://example.com/parrot")
+        
+        let searchResults = await emojiProvider.categories(searchString: "parr")
+        #expect(searchResults.map(\.id) == [EmojiCategory.frequentlyUsedCategoryIdentifier, "custom"])
+    }
 }
 
 private class EmojiLoaderMock: EmojiLoaderProtocol {
     var categories = [ElementX.EmojiCategory]()
+    
+    init(categories: [ElementX.EmojiCategory] = []) {
+        self.categories = categories
+    }
+    
     func load() async -> [ElementX.EmojiCategory] {
         categories
     }

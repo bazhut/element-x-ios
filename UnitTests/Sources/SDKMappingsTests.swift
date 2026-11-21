@@ -219,7 +219,70 @@ struct SDKMappingsTests {
         #expect(mappedEvent.contentJSON == #"{"slot_id":"m.call#ROOM"}"#)
     }
     
+    // MARK: Delayed events
+    
+    @Test("A delayed state event is scheduled with an escaped path and the delay in milliseconds")
+    func delayedStateEventRequest() throws {
+        let request = try #require(SDKMappings.delayedStateEventRequest(session: session,
+                                                                        roomID: "!room:example.org",
+                                                                        eventType: "org.matrix.msc3401.call.member",
+                                                                        stateKey: "_@bob:example.org_DEV_m.call",
+                                                                        contentJSON: "{}",
+                                                                        delay: .seconds(8)))
+        
+        #expect(request.httpMethod == "PUT")
+        #expect(request.url?.absoluteString == "https://example.org/_matrix/client/v3/rooms/%21room%3Aexample.org/state/org.matrix.msc3401.call.member/_%40bob%3Aexample.org_DEV_m.call?org.matrix.msc4140.delay=8000")
+        #expect(request.value(forHTTPHeaderField: "Authorization") == "Bearer token")
+        #expect(request.httpBody == Data("{}".utf8))
+    }
+    
+    @Test("A delayed event is restarted through MSC4140's update endpoint")
+    func delayedEventUpdateRequest() throws {
+        let request = try #require(SDKMappings.delayedEventUpdateRequest(session: session, delayID: "syd_abc", action: "restart"))
+        let body = try #require(request.httpBody)
+        
+        #expect(request.httpMethod == "POST")
+        #expect(request.url?.absoluteString == "https://example.org/_matrix/client/unstable/org.matrix.msc4140/delayed_events/syd_abc")
+        #expect(try JSONSerialization.jsonObject(with: body) as? [String: String] == ["action": "restart"])
+    }
+    
+    @Test("A homeserver without delayed events is reported by its error code, for the core to stop asking")
+    func unsupportedDelayedEvents() {
+        let error = SDKMappings.backendError(statusCode: 404, responseData: Data(#"{"errcode": "M_UNRECOGNIZED", "error": "Unrecognized request"}"#.utf8))
+        
+        #expect(error.errorCode == "M_UNRECOGNIZED")
+        #expect(error.statusCode == 404)
+        #expect(!error.isPermanent)
+        #expect(error.reason == "Unrecognized request")
+    }
+    
+    @Test("A rate limited request carries its retry delay")
+    func rateLimitedRequest() {
+        let error = SDKMappings.backendError(statusCode: 429, responseData: Data(#"{"errcode": "M_LIMIT_EXCEEDED", "retry_after_ms": 2000}"#.utf8))
+        
+        #expect(error.errorCode == "M_LIMIT_EXCEEDED")
+        #expect(error.retryAfter == .milliseconds(2000))
+    }
+    
+    @Test("A refusal without a Matrix error code is final")
+    func refusalWithoutErrorCode() {
+        let error = SDKMappings.backendError(statusCode: 403, responseData: Data("Forbidden".utf8))
+        
+        #expect(error.errorCode == nil)
+        #expect(error.isPermanent)
+    }
+    
     // MARK: - Fixtures
+    
+    private var session: Session {
+        Session(accessToken: "token",
+                refreshToken: nil,
+                userId: "@alice:example.org",
+                deviceId: "DEVICE",
+                homeserverUrl: "https://example.org/",
+                oauthData: nil,
+                slidingSyncVersion: .native)
+    }
     
     private func encryptionInfo(senderID: String, shield: ShieldState) -> EventEncryptionInfo {
         EventEncryptionInfo(senderId: senderID,

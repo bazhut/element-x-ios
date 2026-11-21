@@ -616,7 +616,15 @@ final class ElementCallManager: NSObject, ElementCallManagerProtocol, PKPushRegi
     
     // MARK: - PKPushRegistryDelegate
     
-    func pushRegistry(_ registry: PKPushRegistry, didUpdate pushCredentials: PKPushCredentials, for type: PKPushType) { }
+    func pushRegistry(_ registry: PKPushRegistry, didUpdate pushCredentials: PKPushCredentials, for type: PKPushType) {
+        MXLog.info("Received a PushKit token, sharing it with the NSE")
+        appSettings.voipPushToken = pushCredentials.token.base64EncodedString()
+    }
+    
+    func pushRegistry(_ registry: PKPushRegistry, didInvalidatePushTokenFor type: PKPushType) {
+        MXLog.info("The PushKit token was invalidated")
+        appSettings.voipPushToken = nil
+    }
     
     func pushRegistry(_ registry: PKPushRegistry, didReceiveIncomingPushWith payload: PKPushPayload, for type: PKPushType, completion: @escaping () -> Void) {
         guard let push = VoIPPushPayload(dictionary: payload.dictionaryPayload) else {
@@ -665,8 +673,11 @@ final class ElementCallManager: NSObject, ElementCallManagerProtocol, PKPushRegi
         // If not for audio call the app will not be put to foreground and the webview won't be able to handle the call...
         // Consequence: The call will be presented to the user as a video call in CallKit UI,
         // but once Element Call is launched it will correctly route to a voice-only call.
-        // TODO: A native voice call answered on the lock screen at cold launch has no scene to start its call from, so the watchdog ends it.
-        update.hasVideo = appSettings.nativeCallEnabled ? !push.isVoiceCall : true
+        // A native voice call answered on the lock screen doesn't open the app, so before the receiver's
+        // screens and native call stack exist (a cold launch) it's reported with video for the answer to open them.
+        // The native stack still joins a voice call with the camera off.
+        let canAnswerWithoutOpening = appSettings.nativeCallEnabled && services[push.receiverID] != nil
+        update.hasVideo = canAnswerWithoutOpening ? !push.isVoiceCall : true
         update.localizedCallerName = push.roomDisplayName
         // https://stackoverflow.com/a/41230020/730924
         update.remoteHandle = .init(type: .generic, value: push.roomID)

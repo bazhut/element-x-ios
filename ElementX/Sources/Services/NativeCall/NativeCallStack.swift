@@ -129,10 +129,9 @@ final class NativeCallStack {
             // necessarily a minimize we asked for.
             actionsSubject.send(.minimize)
         case .pictureInPictureUnavailable:
-            // Hiding the screen without a window to minimize into would leave the call running with
-            // no way back to mute or hang up.
-            MXLog.info("\(Self.logPrefix) Staying on the call screen: no system window is available.")
-            actionsSubject.send(.restore)
+            // Without a system window the call minimizes to the app's call bar, which leads back to it.
+            MXLog.info("\(Self.logPrefix) Minimizing to the call bar: no system window is available.")
+            actionsSubject.send(.minimize)
         }
     }
     
