@@ -7,6 +7,10 @@
 
 extension AccessibilityTests {
 
+    func testAccountInfoCardView() async throws {
+        try await performAccessibilityAudit(named: "AccountInfoCardView_Previews")
+    }
+
     func testActiveCallTimelineItemView() async throws {
         try await performAccessibilityAudit(named: "ActiveCallTimelineItemView_Previews")
     }
@@ -513,6 +517,10 @@ extension AccessibilityTests {
 
     func testRedactedRoomTimelineView() async throws {
         try await performAccessibilityAudit(named: "RedactedRoomTimelineView_Previews")
+    }
+
+    func testRemoteLogoutScreen() async throws {
+        try await performAccessibilityAudit(named: "RemoteLogoutScreen_Previews")
     }
 
     func testReportContentScreen() async throws {

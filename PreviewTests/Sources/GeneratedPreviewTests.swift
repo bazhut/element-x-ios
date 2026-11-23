@@ -12,6 +12,13 @@ extension PreviewTests {
     // MARK: - PreviewProvider
 
     @Test
+    func accountInfoCardView() async throws {
+        for (index, preview) in AccountInfoCardView_Previews._allPreviews.enumerated() {
+            try await assertSnapshots(matching: preview, step: index)
+        }
+    }
+
+    @Test
     func activeCallTimelineItemView() async throws {
         for (index, preview) in ActiveCallTimelineItemView_Previews._allPreviews.enumerated() {
             try await assertSnapshots(matching: preview, step: index)
@@ -896,6 +903,13 @@ extension PreviewTests {
     @Test
     func redactedRoomTimelineView() async throws {
         for (index, preview) in RedactedRoomTimelineView_Previews._allPreviews.enumerated() {
+            try await assertSnapshots(matching: preview, step: index)
+        }
+    }
+
+    @Test
+    func remoteLogoutScreen() async throws {
+        for (index, preview) in RemoteLogoutScreen_Previews._allPreviews.enumerated() {
             try await assertSnapshots(matching: preview, step: index)
         }
     }
