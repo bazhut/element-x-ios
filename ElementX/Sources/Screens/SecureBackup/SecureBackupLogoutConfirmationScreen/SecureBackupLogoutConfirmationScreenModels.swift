@@ -20,6 +20,8 @@ enum SecureBackupLogoutConfirmationScreenViewModelAction {
 }
 
 nonisolated enum SecureBackupLogoutConfirmationScreenViewMode: Equatable {
+    /// The user has other devices, show a friendly confirmation prompt.
+    case confirmationOnly
     /// The user has a recovery key but this is their only verified device.
     case saveRecoveryKey
     /// The user has no recovery key and this is their only verified device.
@@ -30,18 +32,42 @@ nonisolated enum SecureBackupLogoutConfirmationScreenViewMode: Equatable {
     
     /// Whether the user is still being asked about removing the device, as opposed to the removal being underway.
     var isInitial: Bool {
-        self == .saveRecoveryKey || self == .noRecovery
+        switch self {
+        case .confirmationOnly, .saveRecoveryKey, .noRecovery: true
+        default: false
+        }
+    }
+    
+    /// Whether the toolbar shows a button to close the screen.
+    var showsCloseButton: Bool {
+        switch self {
+        case .confirmationOnly: false
+        default: true
+        }
+    }
+    
+    /// Returns the initial mode the screen should use, based on the user's recovery options after the device has been removed.
+    init(hasOtherVerifiedDevice: Bool, recoveryState: SecureBackupRecoveryState) {
+        self = if hasOtherVerifiedDevice {
+            .confirmationOnly
+        } else if recoveryState == .enabled {
+            .saveRecoveryKey // Note: We no longer check the key backup state, it shouldn't be possible to disable on its own.
+        } else {
+            .noRecovery
+        }
     }
 }
 
 struct SecureBackupLogoutConfirmationScreenViewState: BindableState {
     let learnMoreURL: URL
     var mode: SecureBackupLogoutConfirmationScreenViewMode
+    var userProfile: UserProfile
+    
     var bindings = SecureBackupLogoutConfirmationScreenBindings()
     
     var icon: (keyPath: KeyPath<CompoundIcons, Image>, style: BigIcon.Style) {
         switch mode {
-        case .saveRecoveryKey:
+        case .confirmationOnly, .saveRecoveryKey:
             (\.info, .defaultSolid)
         case .noRecovery:
             (\.errorSolid, .alertSolid)
@@ -52,6 +78,8 @@ struct SecureBackupLogoutConfirmationScreenViewState: BindableState {
     
     var title: String {
         switch mode {
+        case .confirmationOnly:
+            L10n.screenSignoutOtherVerifiedDeviceDialogTitle
         case .saveRecoveryKey:
             L10n.screenSignoutSaveRecoveryKeyTitle
         case .noRecovery:
@@ -65,6 +93,8 @@ struct SecureBackupLogoutConfirmationScreenViewState: BindableState {
     
     var subtitle: String {
         switch mode {
+        case .confirmationOnly:
+            L10n.screenSignoutOtherVerifiedDeviceDialogContent
         case .saveRecoveryKey:
             L10n.screenSignoutSaveRecoveryKeySubtitle
         case .noRecovery:

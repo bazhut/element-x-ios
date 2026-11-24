@@ -19,15 +19,16 @@ struct SecureBackupLogoutFlowCoordinatorParameters {
     let userSession: UserSessionProtocol
     let userIndicatorController: UserIndicatorControllerProtocol
     let navigationStackCoordinator: NavigationStackCoordinator
-    let mode: SecureBackupLogoutConfirmationScreenViewMode
+    /// Whether the user has another verified device, to decide if they need to be warned about anything.
+    let hasOtherVerifiedDevice: Bool
 }
 
-/// Asks the user about the recovery key they'll need after removing their only verified device, and lets them create a new one.
+/// Confirms the user wants to log out, warning them about anything they could lose and letting them check or create a recovery key first.
 class SecureBackupLogoutFlowCoordinator: FlowCoordinatorProtocol {
     private let userSession: UserSessionProtocol
     private let userIndicatorController: UserIndicatorControllerProtocol
     private let navigationStackCoordinator: NavigationStackCoordinator
-    private let mode: SecureBackupLogoutConfirmationScreenViewMode
+    private let hasOtherVerifiedDevice: Bool
     
     enum State: StateType {
         /// The state machine hasn't started.
@@ -62,7 +63,7 @@ class SecureBackupLogoutFlowCoordinator: FlowCoordinatorProtocol {
         userSession = parameters.userSession
         userIndicatorController = parameters.userIndicatorController
         navigationStackCoordinator = parameters.navigationStackCoordinator
-        mode = parameters.mode
+        hasOtherVerifiedDevice = parameters.hasOtherVerifiedDevice
         
         stateMachine = .init(state: .initial)
         configureStateMachine()
@@ -113,10 +114,12 @@ class SecureBackupLogoutFlowCoordinator: FlowCoordinatorProtocol {
     }
     
     private func presentConfirmationScreen() {
-        let coordinator = SecureBackupLogoutConfirmationScreenCoordinator(parameters: .init(secureBackupController: userSession.clientProxy.secureBackupController,
-                                                                                            homeserverReachabilityPublisher: userSession.clientProxy.homeserverReachabilityPublisher,
-                                                                                            learnMoreURL: userSession.userSettings.app.encryptionURL,
-                                                                                            mode: mode))
+        let secureBackupController = userSession.clientProxy.secureBackupController
+        let mode = SecureBackupLogoutConfirmationScreenViewMode(hasOtherVerifiedDevice: hasOtherVerifiedDevice,
+                                                                recoveryState: secureBackupController.recoveryState.value)
+        
+        let parameters = SecureBackupLogoutConfirmationScreenCoordinatorParameters(userSession: userSession, mode: mode)
+        let coordinator = SecureBackupLogoutConfirmationScreenCoordinator(parameters: parameters)
         
         coordinator.actions
             .sink { [weak self] action in

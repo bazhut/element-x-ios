@@ -175,6 +175,15 @@ struct TimelineReactionButton: View {
     let showReactionSummary: (String) -> Void
     @ScaledMetric(relativeTo: .subheadline) private var lineHeight = 20
     
+    @Environment(\.shouldAutomaticallyLoadImages) private var shouldAutomaticallyLoadImages
+    // Tracked here rather than left to `LoadableImage` so that a tap anywhere on the button reveals the image.
+    @State private var isImageRevealed = false
+    
+    /// A hidden custom image is revealed by the first tap instead of toggling the reaction.
+    private var hidesImage: Bool {
+        reaction.imageURL != nil && !shouldAutomaticallyLoadImages && !isImageRevealed
+    }
+    
     private var accessibilityLabel: String {
         if reaction.isHighlighted {
             return reaction.count > 1 ? L10n.tr("Localizable", "screen_room_timeline_reaction_including_you_a11y", reaction.count - 1, reaction.displayKey) : L10n.screenRoomTimelineReactionYouA11y(reaction.displayKey)
@@ -189,7 +198,11 @@ struct TimelineReactionButton: View {
     var body: some View {
         label
             .onTapGesture {
-                toggleReaction(reaction.key)
+                if hidesImage {
+                    isImageRevealed = true
+                } else {
+                    toggleReaction(reaction.key)
+                }
             }
             .longPressWithFeedback {
                 showReactionSummary(reaction.key)
@@ -210,6 +223,7 @@ struct TimelineReactionButton: View {
                 // to the count text and the lineHeight/padding in the designs.
                 ReactionKeyView(reaction: reaction, mediaProvider: mediaProvider, size: lineHeight)
                     .font(.compound.bodySM)
+                    .environment(\.shouldAutomaticallyLoadImages, shouldAutomaticallyLoadImages || isImageRevealed)
                 Text(String(reaction.count))
                     .font(.compound.bodyMD)
                     .foregroundColor(textColor)
@@ -234,6 +248,9 @@ struct ReactionKeyView: View {
     var body: some View {
         if let imageURL = reaction.imageURL {
             CustomEmojiImage(url: imageURL, size: size, mediaProvider: mediaProvider)
+                .environment(\.showsIconForHiddenImages, true)
+                // Reactions are buttons, their taps reveal the image instead.
+                .allowsHitTesting(false)
         } else {
             Text(reaction.displayKey)
         }
