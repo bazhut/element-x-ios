@@ -17,13 +17,23 @@ struct EmojiItem: Equatable, Identifiable {
     let unicode: String
     let keywords: [String]
     let shortcodes: [String]
+    /// The image of a custom emoji, sent as its reaction key (MSC4027).
+    var imageURL: URL?
+    
+    /// The reaction key to send for this emoji.
+    var key: String {
+        imageURL?.absoluteString ?? unicode
+    }
 }
 
 struct EmojiCategory: Equatable, Identifiable {
     static let frequentlyUsedCategoryIdentifier = "io.element.elementx.frequently_used"
+    static let customEmojiCategoryIdentifierPrefix = "io.element.elementx.custom_emoji."
     
     let id: String
     let emojis: [EmojiItem]
+    /// The display name of a custom emoji pack. Built-in categories are named from their `id`.
+    var name: String?
 }
 
 enum EmojiProviderState {

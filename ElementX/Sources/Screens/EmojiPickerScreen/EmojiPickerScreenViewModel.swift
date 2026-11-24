@@ -23,11 +23,12 @@ class EmojiPickerScreenViewModel: EmojiPickerScreenViewModelType, EmojiPickerScr
     init(mode: EmojiPickerScreenMode = .reaction,
          selectedEmojis: Set<String>,
          emojiProvider: EmojiProviderProtocol,
+         mediaProvider: MediaProviderProtocol? = nil,
          continuation: EmojiPickerScreenContinuation) {
         let initialViewState = EmojiPickerScreenViewState(mode: mode, categories: [], selectedEmojis: selectedEmojis)
         self.emojiProvider = emojiProvider
         self.continuation = continuation
-        super.init(initialViewState: initialViewState)
+        super.init(initialViewState: initialViewState, mediaProvider: mediaProvider)
         loadEmojis()
     }
     
@@ -64,10 +65,20 @@ class EmojiPickerScreenViewModel: EmojiPickerScreenViewModelType, EmojiPickerScr
     private func convert(emojiCategories: [EmojiCategory]) -> [EmojiPickerEmojiCategoryViewData] {
         emojiCategories.compactMap { emojiCategory in
             let emojisViewData: [EmojiPickerEmojiViewData] = emojiCategory.emojis.compactMap { emojiItem in
-                EmojiPickerEmojiViewData(id: "\(emojiCategory.id)-\(emojiItem.id)", value: emojiItem.unicode)
+                // A status is plain text, so it can't hold a custom emoji.
+                if state.mode == .userStatus, emojiItem.imageURL != nil {
+                    return nil
+                }
+                
+                return EmojiPickerEmojiViewData(id: "\(emojiCategory.id)-\(emojiItem.id)",
+                                                value: emojiItem.key,
+                                                imageURL: emojiItem.imageURL,
+                                                label: emojiItem.imageURL == nil ? nil : emojiItem.label)
             }
             
-            return EmojiPickerEmojiCategoryViewData(id: emojiCategory.id, emojis: emojisViewData)
+            guard !emojisViewData.isEmpty else { return nil }
+            
+            return EmojiPickerEmojiCategoryViewData(id: emojiCategory.id, emojis: emojisViewData, packName: emojiCategory.name)
         }
     }
     
